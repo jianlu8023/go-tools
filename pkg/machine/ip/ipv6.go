@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+
+	"github.com/jianlu8023/go-tools/internal/machine"
 )
 
 // GetIPv6Addr
@@ -31,29 +33,12 @@ func GetIPv6Addr() string {
 			fmt.Println(err)
 			return ""
 		}
-		if containsIPv4(addrs, udpIP) {
+		if machine.ContainsIPv4(iface, udpIP) {
 			return addrs[1].(*net.IPNet).IP.String()
 		}
 	}
 
 	return ""
-}
-
-// containsIPv4
-// @Description: containsIPv4
-// @author ght
-// @date 2023-10-20 18:39:27
-// @param addrs:
-// @param target:
-// @return bool:
-func containsIPv4(addrs []net.Addr, target net.IP) bool {
-	for _, v := range addrs {
-		addr := v.(*net.IPNet)
-		if addr.Contains(target) {
-			return true
-		}
-	}
-	return false
 }
 
 // GetIPv6Addrs
