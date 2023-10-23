@@ -13,6 +13,7 @@ import (
 // @return string:
 func GetMacAddr() string {
 	conn, _ := net.Dial("udp", "8.8.8.8:53")
+	defer conn.Close()
 
 	udpIP := conn.LocalAddr().(*net.UDPAddr).IP
 	interfaces, _ := net.Interfaces()
