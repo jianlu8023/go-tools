@@ -1,4 +1,4 @@
-package ip
+package ip6
 
 import (
 	"fmt"
@@ -71,4 +71,12 @@ func GetIPv6Addrs() map[string]string {
 		}
 	}
 	return IPv6Map
+}
+
+func IPv6Reachable(ip string) bool {
+	if err := machine.Reachable(ip); err != nil {
+		return false
+	} else {
+		return true
+	}
 }

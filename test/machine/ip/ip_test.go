@@ -5,26 +5,27 @@ import (
 	"net"
 	"testing"
 
-	"github.com/jianlu8023/go-tools/pkg/machine/ip"
+	"github.com/jianlu8023/go-tools/pkg/machine/ip4"
+	"github.com/jianlu8023/go-tools/pkg/machine/ip6"
 )
 
 func TestGetIp(t *testing.T) {
-	addr := ip.GetIPv4Addr()
+	addr := ip4.GetIPv4Addr()
 	fmt.Println(addr)
 }
 
 func TestGetIPv4Addrs(t *testing.T) {
-	addrs := ip.GetIPv4Addrs()
+	addrs := ip4.GetIPv4Addrs()
 	fmt.Println(addrs)
 }
 
 func TestGetIPv6Addr(t *testing.T) {
-	addr := ip.GetIPv6Addr() // fe80::20c:29ff:fe82:c12f
+	addr := ip6.GetIPv6Addr() // fe80::20c:29ff:fe82:c12f
 	fmt.Println(addr)
 }
 
 func TestGetIPv6Addrs(t *testing.T) {
-	addrs := ip.GetIPv6Addrs()
+	addrs := ip6.GetIPv6Addrs()
 	fmt.Println(addrs)
 }
 
@@ -49,10 +50,10 @@ func TestIPAddrInterface(t *testing.T) {
 			ip := n.IP             // 127.0.0.1
 
 			fmt.Println(fmt.Sprintf(
-				"%d ifaceName : %v, ifaceHardwareAddr: %v, ifaceFlags: %v, ifaceMTU: %v, addr %d, ip: %v ",
+				"%d ifaceName : %v, ifaceHardwareAddr: %v, ifaceFlags: %v, ifaceMTU: %v, addr %d, ip4: %v ",
 				i, ifaceName, ifaceHardwareAddr, ifaceFlags, ifaceMTU, j, ip))
 
-			// network := n.Network() // ip+net
+			// network := n.Network() // ip4+net
 			// s := n.String()        // 127.0.0.1/24
 			// fmt.Println(fmt.Sprintf("*net.IPAddr : %v, n.network: %v, n.string: %v, IP: %v", n, network, s, i))
 			// if !n.IP.IsLoopback() {

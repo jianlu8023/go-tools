@@ -1,18 +1,19 @@
-package ip
+package ip4
 
 import (
 	"log"
 	"net"
 	"strings"
+
+	"github.com/jianlu8023/go-tools/internal/machine"
 )
 
 // GetIPv4Addr
 // @Description: GetIPv4Addr
-// @author ght
 // @date 2023-10-20 17:38:57
 // @return string:
 func GetIPv4Addr() string {
-	// use udp get ip address
+	// use udp get ip4 address
 	dial, err := net.Dial("udp", "8.8.8.8:53")
 	defer dial.Close()
 	if err != nil {
@@ -26,7 +27,6 @@ func GetIPv4Addr() string {
 
 // GetIPv4Addrs
 // @Description: GetIPv4Addrs
-// @author ght
 // @date 2023-10-20 17:40:56
 // @return map[string]string:
 func GetIPv4Addrs() map[string]string {
@@ -54,4 +54,14 @@ func GetIPv4Addrs() map[string]string {
 		}
 	}
 	return IPv4Map
+}
+
+// IPv4Readable 检查ip地址是否可达
+func IPv4Readable(ip string) bool {
+
+	if err := machine.Reachable(ip); err != nil {
+		return false
+	} else {
+		return true
+	}
 }
