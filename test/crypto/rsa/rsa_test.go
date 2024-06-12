@@ -16,11 +16,11 @@ import (
 func TestRsaEncryptDecrypt(t *testing.T) {
 	data := []byte("hello world")
 	fmt.Println(data)
-	encrypt := rsa.RsaEncrypt(data)
+	encrypt := rsa.Encrypt(data)
 	fmt.Println(encrypt)
 	encode := base64.ByteToBase64(encrypt)
 	fmt.Println(encode)
-	decrypt := rsa.RsaDecrypt(encrypt)
+	decrypt := rsa.Decrypt(encrypt)
 	fmt.Println(decrypt)
 
 }
