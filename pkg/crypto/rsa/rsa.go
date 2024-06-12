@@ -16,13 +16,10 @@ var (
 	keyMutex = sync.Mutex{}
 )
 
-// RsaEncrypt
-// @Description: RsaEncrypt
-// @author ght
-// @date 2023-10-07 16:40:08
+// Encrypt
 // @param data: 待加密的数据
 // @return []byte: 加密结果
-func RsaEncrypt(data []byte) []byte {
+func Encrypt(data []byte) []byte {
 	if !checkRsaFile() {
 		generateKeyPair()
 	}
@@ -49,13 +46,10 @@ func RsaEncrypt(data []byte) []byte {
 	return v15
 }
 
-// RsaDecrypt
-// @Description: RsaDecrypt
-// @author ght
-// @date 2023-10-07 16:40:13
+// Decrypt
 // @param data: 待解密数据
 // @return []byte: 解密结果
-func RsaDecrypt(data []byte) []byte {
+func Decrypt(data []byte) []byte {
 	if !checkRsaFile() {
 		generateKeyPair()
 	}
@@ -82,9 +76,6 @@ func RsaDecrypt(data []byte) []byte {
 }
 
 // generateKeyPair
-// @Description: generateKeyPair
-// @author ght
-// @date 2023-10-07 16:39:06
 func generateKeyPair() {
 	keyMutex.Lock()
 	defer keyMutex.Unlock()
@@ -127,9 +118,6 @@ func generateKeyPair() {
 }
 
 // saveFile
-// @Description: saveFile
-// @author ght
-// @date 2023-10-07 16:39:22
 // @param path: 文件存储路径
 // @param content: 文件内容
 // @return error: 保存文件可能出现的错误
@@ -159,9 +147,6 @@ func saveFile(path string, content []byte) error {
 }
 
 // checkRsaFile
-// @Description: checkRsaFile
-// @author ght
-// @date 2023-10-07 16:39:35
 // @return bool: 是否存在公私钥文件
 func checkRsaFile() bool {
 	wd, _ := os.Getwd()

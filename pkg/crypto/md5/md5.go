@@ -7,8 +7,6 @@ import (
 
 // MD5
 // @Description: MD5
-// @author ght
-// @date 2023-10-07 16:52:23
 // @param str:
 // @return string:
 func MD5(str string) string {
