@@ -2,15 +2,27 @@ package json
 
 import (
 	"encoding/json"
+
+	"github.com/bytedance/sonic"
 )
 
 // PrettyJSON
-// @Description: PrettyJSON
-// @author ght
-// @date 2023-10-07 16:55:51
 // @param any:
 // @return string:
-func PrettyJSON(any interface{}) string {
-	bytes, _ := json.MarshalIndent(any, "", "    ")
-	return string(bytes)
+func PrettyJSON(any interface{}) (string, error) {
+	bytes, err := json.MarshalIndent(any, "", "    ")
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
+
+// ToJSON 转成 json 字符串
+func ToJSON(obj any) (string, error) {
+	bytes, err := sonic.Marshal(obj)
+	if err != nil {
+		return "", err
+	}
+
+	return string(bytes), nil
 }
