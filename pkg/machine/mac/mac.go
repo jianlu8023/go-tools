@@ -7,9 +7,6 @@ import (
 )
 
 // GetMacAddr
-// @Description: GetMacAddr
-// @author ght
-// @date 2023-10-20 18:51:25
 // @return string:
 func GetMacAddr() string {
 	conn, _ := net.Dial("udp", "8.8.8.8:53")

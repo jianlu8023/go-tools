@@ -9,8 +9,6 @@ import (
 )
 
 // GetIPv4Addr
-// @Description: GetIPv4Addr
-// @date 2023-10-20 17:38:57
 // @return string:
 func GetIPv4Addr() string {
 	// use udp get ip4 address
@@ -26,8 +24,6 @@ func GetIPv4Addr() string {
 }
 
 // GetIPv4Addrs
-// @Description: GetIPv4Addrs
-// @date 2023-10-20 17:40:56
 // @return map[string]string:
 func GetIPv4Addrs() map[string]string {
 	IPv4Map := make(map[string]string)

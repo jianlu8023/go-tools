@@ -9,9 +9,6 @@ import (
 )
 
 // GetIPv6Addr
-// @Description: GetIPv6Addr
-// @author ght
-// @date 2023-10-20 18:39:24
 // @return string:
 func GetIPv6Addr() string {
 	conn, err := net.Dial("udp", "8.8.8.8:53")
@@ -42,9 +39,6 @@ func GetIPv6Addr() string {
 }
 
 // GetIPv6Addrs
-// @Description: GetIPv6Addrs
-// @author ght
-// @date 2023-10-20 18:40:36
 // @return map[string]string:
 func GetIPv6Addrs() map[string]string {
 	IPv6Map := make(map[string]string)
