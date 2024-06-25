@@ -6,8 +6,6 @@ import (
 
 // Replace
 // @Description: Replace
-// @author ght
-// @date 2023-10-07 16:59:00
 // @param template: 模板
 // @param replacements: 替换的信息
 // @return string: 替换后
