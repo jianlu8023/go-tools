@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jianlu8023/go-tools/pkg/docker/container"
 	"github.com/jianlu8023/go-tools/pkg/format/json"
 )
 
 func TestGetContainersInspect(t *testing.T) {
-	inspect := container.GetContainersInspect()
+	inspect := GetContainersInspect()
 	fmt.Println(json.PrettyJSON(inspect))
 }
 
 func TestGetContainerInspect(t *testing.T) {
-	inspect := container.GetContainerInspect("mysql")
+
+	inspect := GetContainerInspect("mysql")
 	fmt.Println(json.PrettyJSON(inspect))
 }

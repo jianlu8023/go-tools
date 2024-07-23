@@ -1,32 +1,24 @@
-package ip
+package ip4
 
 import (
 	"fmt"
 	"net"
 	"testing"
-
-	"github.com/jianlu8023/go-tools/pkg/machine/ip4"
-	"github.com/jianlu8023/go-tools/pkg/machine/ip6"
 )
 
-func TestGetIp(t *testing.T) {
-	addr := ip4.GetIPv4Addr()
-	fmt.Println(addr)
+func TestGetIPv4Addr(t *testing.T) {
+	addr := GetIPv4Addr()
+	t.Log(addr)
 }
 
 func TestGetIPv4Addrs(t *testing.T) {
-	addrs := ip4.GetIPv4Addrs()
-	fmt.Println(addrs)
+	addrs := GetIPv4Addrs()
+	t.Log(addrs)
 }
 
-func TestGetIPv6Addr(t *testing.T) {
-	addr := ip6.GetIPv6Addr() // fe80::20c:29ff:fe82:c12f
-	fmt.Println(addr)
-}
-
-func TestGetIPv6Addrs(t *testing.T) {
-	addrs := ip6.GetIPv6Addrs()
-	fmt.Println(addrs)
+func TestIPv4Readable(t *testing.T) {
+	readable := IPv4Readable("192.168.58.110:3306")
+	t.Log(readable)
 }
 
 func TestIPAddrInterface(t *testing.T) {

@@ -9,12 +9,17 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"github.com/jianlu8023/go-tools/internal/logger"
 )
 
 // keyMutex 生成公私钥对时同步块
 var (
 	keyMutex = sync.Mutex{}
+	log      = logger.GetLogger()
 )
+
+// TODO 加解密方式不对 加密修改为 内容加公钥 解密修改为 内容加私钥
 
 // Encrypt
 // @param data: 待加密的数据
@@ -27,7 +32,8 @@ func Encrypt(data []byte) []byte {
 	publicKeyPath := filepath.Join(wd, "metadata", "rsa", "rsa_public_key.pem")
 	publicKeyBytes, err := os.ReadFile(publicKeyPath)
 	if err != nil {
-		fmt.Println(fmt.Errorf("读取公钥失败:%s", err))
+		// fmt.Println(fmt.Errorf("读取公钥失败:%s", err))
+		log.Errorf("读取公钥失败:%s", err)
 	}
 	block, _ := pem.Decode(publicKeyBytes)
 	if block == nil {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/jianlu8023/go-tools/pkg/crypto/rsa"
 	"github.com/jianlu8023/go-tools/pkg/encoding/base64"
 )
 
@@ -16,11 +15,11 @@ import (
 func TestRsaEncryptDecrypt(t *testing.T) {
 	data := []byte("hello world")
 	fmt.Println(data)
-	encrypt := rsa.Encrypt(data)
+	encrypt := Encrypt(data)
 	fmt.Println(encrypt)
 	encode := base64.ByteToBase64(encrypt)
 	fmt.Println(encode)
-	decrypt := rsa.Decrypt(encrypt)
+	decrypt := Decrypt(encrypt)
 	fmt.Println(decrypt)
 
 }

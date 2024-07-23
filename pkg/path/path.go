@@ -9,6 +9,7 @@ import (
 // @param path 目录路径
 // @return error 错误信息
 func Ensure(path string) error {
+	// TODO 缺少判断路经是否包括文件的情况
 	err := os.MkdirAll(path, os.ModeDir)
 	if err != nil {
 		fmt.Println("Mkdir Error ", err)
