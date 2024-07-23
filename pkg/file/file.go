@@ -1,44 +1,73 @@
 package file
 
 import (
-	"fmt"
 	"io"
 	"os"
 
-	"github.com/jianlu8023/go-tools/internal/logger"
 	p "github.com/jianlu8023/go-tools/pkg/path"
 )
 
-var log = logger.GetLogger()
-
 // WriteToFile 写入文件
 // @param path 文件路径
-// @param context 写入内容
+// @param content 写入内容
 // @return error 错误信息
-func WriteToFile(path string, context string) error {
-	exists := p.Exists(path)
-	if exists {
-
-		log.Infof("File %s already exists", path)
-		return fmt.Errorf("File %s already exists", path)
+// @return bool 是否复盖
+func WriteToFile(path string, content string, force bool) error {
+	if abs, err := p.IsAbs(path); err == nil {
+		exists := p.Exists(abs)
+		if exists && force {
+			_ = os.RemoveAll(abs)
+			return overrideWrite(abs, content)
+		} else if exists && !force {
+			return appendWrite(abs, content)
+		} else {
+			return overrideWrite(abs, content)
+		}
+	} else {
+		return err
 	}
-	// TODO 需要判断是绝对路经还是相对路经 然后创建文件，添加参数 force 强制覆盖
-	file, err := os.Create(path)
+}
+
+// appendWrite 追加写入文件
+// @param path 文件路径
+// @param content 写入内容
+// @return error 错误信息
+func appendWrite(path, content string) error {
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
-		// fmt.Println("Create File Error ", err)
-		log.Errorf("Create File Error %v", err)
+		return err
+	}
+
+	defer func(file *os.File) {
+		_ = file.Close()
+	}(file)
+
+	_, err = io.WriteString(file, content)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// overrideWrite 复盖写入文件
+// @param path 文件路径
+// @param content 写入内容
+// @return error 错误信息
+func overrideWrite(path, content string) error {
+	err := p.Ensure(path)
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(path, os.O_WRONLY, os.ModePerm)
+	if err != nil {
 		return err
 	}
 	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			fmt.Println("Close File Error ", err)
-		}
+		_ = file.Close()
 	}(file)
-
-	_, err = io.WriteString(file, context)
+	_, err = io.WriteString(file, content)
 	if err != nil {
-		fmt.Println("Write File Error ", err)
 		return err
 	}
 	return nil

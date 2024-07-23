@@ -5,7 +5,6 @@ import (
 )
 
 // Replace
-// @Description: Replace
 // @param template: 模板
 // @param replacements: 替换的信息
 // @return string: 替换后

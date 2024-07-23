@@ -35,11 +35,6 @@ type Animal struct {
 	Age  int    `json:"age"`
 }
 
-// TestPrettyJSON
-// @Description: TestPrettyJSON
-// @author ght
-// @date 2023-10-07 17:15:59
-// @param t:
 func TestPrettyJSON2(t *testing.T) {
 	animals := []Animal{
 		{Name: "兔子", Age: 10},

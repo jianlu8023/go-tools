@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
+
 	"github.com/jianlu8023/go-tools/pkg/replace"
 )
 
@@ -15,9 +16,6 @@ var (
 )
 
 // GitHubAllRepository
-// @Description: GitHubAllRepository
-// @author ght
-// @date 2023-10-07 18:07:52
 // @param owner:
 // @param token:
 // @return *resty.Response:
@@ -43,9 +41,6 @@ func GitHubAllRepository(owner, token string) (*resty.Response, error) {
 }
 
 // GitHubRepository
-// @Description: GitHubRepository
-// @author ght
-// @date 2023-10-07 18:10:19
 // @param owner:
 // @param repo:
 // @param token:

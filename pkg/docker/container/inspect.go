@@ -10,11 +10,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// GetContainersInspect
-// @Description: GetContainersInspect 获取本地docker所有容器信息
-// @author ght
-// @date 2023-10-25 16:17:31
-// @return map[string]map[string]interface{}:
+// GetContainersInspect 获取本地docker所有容器信息
+// @return map[string]*map[string]interface{}
 func GetContainersInspect() map[string]*map[string]interface{} {
 	containersMap := make(map[string]*map[string]interface{})
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -69,12 +66,9 @@ func GetContainersInspect() map[string]*map[string]interface{} {
 	return containersMap
 }
 
-// GetContainerInspect
-// @Description: GetContainerInspect
-// @author ght
-// @date 2023-10-25 16:40:08
-// @param containerName:
-// @return map[string]interface{}:
+// GetContainerInspect 获取本地docker指定容器信息
+// @param containerName: 容器名称
+// @return *map[string]interface{}: 信息
 func GetContainerInspect(containerName string) *map[string]interface{} {
 	containersMap := GetContainersInspect()
 

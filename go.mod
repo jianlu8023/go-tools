@@ -11,7 +11,13 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/jianlu8023/go-logger v0.0.6
 	github.com/pkg/errors v0.9.1
+	github.com/tjfoc/gmsm v1.4.1
 	go.uber.org/zap v1.21.0
+)
+
+replace (
+	chainmaker.org/chainmaker/pb-go/v2 v2.3.4 => chainmaker.org/chainmaker/pb-go/v2 v2.3.0
+	chainmaker.org/chainmaker/sdk-go/v2 v2.3.4 => chainmaker.org/chainmaker/sdk-go/v2 v2.3.0
 )
 
 require (
@@ -76,7 +82,6 @@ require (
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tidwall/tinylru v1.1.0 // indirect
-	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
@@ -94,9 +99,4 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
-)
-
-replace (
-	chainmaker.org/chainmaker/pb-go/v2 v2.3.4 => chainmaker.org/chainmaker/pb-go/v2 v2.3.0
-	chainmaker.org/chainmaker/sdk-go/v2 v2.3.4 => chainmaker.org/chainmaker/sdk-go/v2 v2.3.0
 )

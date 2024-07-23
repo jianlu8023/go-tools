@@ -4,10 +4,7 @@ const (
 	base62 = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-// IntToBase62
-// @Description: IntToBase62
-// @author ght
-// @date 2023-10-07 16:53:21
+// IntToBase62 to Base62
 // @param n:
 // @return string:
 func IntToBase62(n int) string {
