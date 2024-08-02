@@ -2,12 +2,12 @@ package container
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"github.com/pkg/errors"
 )
 
 // GetContainersInspect 获取本地docker所有容器信息
@@ -74,7 +74,7 @@ func GetContainerInspect(containerName string) *map[string]interface{} {
 
 	container := containersMap[containerName]
 	if container == nil {
-		fmt.Println(fmt.Sprintf("Get Container %v Inspect Error: %v", containerName, errors.Errorf("Current Env Not Exist Container %v", containerName)))
+		fmt.Println(fmt.Sprintf("Get Container %v Inspect Error: %v", containerName, errors.New(fmt.Sprintf("Current Env Not Exist Container %v", containerName))))
 		return nil
 	}
 	return container

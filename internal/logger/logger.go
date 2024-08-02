@@ -24,7 +24,7 @@ func init() {
 				FunctionKey:    "",
 				StacktraceKey:  "stacktrace",
 				LineEnding:     zapcore.DefaultLineEnding,
-				EncodeLevel:    glog.CustomCapitalStringLevelEncoder,
+				EncodeLevel:    glog.CustomCapitalLevelEncoder,
 				EncodeTime:     glog.CustomTimeEncoder,
 				EncodeDuration: zapcore.SecondsDurationEncoder,
 				EncodeCaller:   zapcore.ShortCallerEncoder,
