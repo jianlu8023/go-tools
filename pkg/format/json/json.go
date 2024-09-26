@@ -19,9 +19,9 @@ func PrettyJSON(any interface{}) (string, error) {
 
 // ToJSON 转成 json 字符串
 func ToJSON(obj interface{}) (string, error) {
-	bytes, err := sonic.Marshal(obj)
+	marshalString, err := sonic.MarshalString(obj)
 	if err != nil {
 		return "", err
 	}
-	return string(bytes), nil
+	return marshalString, nil
 }

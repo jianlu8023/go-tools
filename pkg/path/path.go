@@ -15,34 +15,52 @@ func errIsNull() error { return errors.New("path is null") }
 
 // Ensure 确保目录存在
 // @param path 目录路径
+// @param isDir 是否文件夹
 // @return error 错误信息
-func Ensure(path string) error {
+func Ensure(path string, isDir bool) error {
 	abs, err := IsAbs(path)
 	if err != nil {
 		return err
 	}
-	dir := filepath.Dir(abs)
 
-	// 如果路径不存在，创建目录
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		err = os.MkdirAll(dir, os.ModePerm)
-		if err != nil {
-			return err
+	if isDir {
+		if _, err := os.Stat(abs); os.IsNotExist(err) {
+			return os.MkdirAll(abs, os.ModePerm)
 		}
-	}
-	fileInfo, err := os.Stat(path)
-	if os.IsNotExist(err) {
-		file, err := os.Create(path)
-		if err != nil {
-			return err
+	} else {
+		dir := filepath.Dir(abs)
+		// 如果路径不存在，创建目录
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+				return err
+			}
 		}
-		defer func(file *os.File) {
-			_ = file.Close()
-		}(file)
-	} else if err != nil {
-		return err
-	} else if !fileInfo.IsDir() {
-		return nil
+		if _, err := os.Stat(abs); os.IsNotExist(err) {
+			f, err := os.Create(abs)
+			defer func(f *os.File) {
+				err := f.Close()
+				if err != nil {
+					return
+				}
+			}(f)
+			if err != nil {
+				return err
+			}
+		}
+		// fileInfo, err := os.Stat(path)
+		// if os.IsNotExist(err) {
+		// 	file, err := os.Create(path)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	defer func(file *os.File) {
+		// 		_ = file.Close()
+		// 	}(file)
+		// } else if err != nil {
+		// 	return err
+		// } else if !fileInfo.IsDir() {
+		// 	return nil
+		// }
 	}
 	return nil
 }

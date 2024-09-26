@@ -15,12 +15,13 @@ import (
 func WriteToFile(path string, content string, force bool) error {
 	if abs, err := p.IsAbs(path); err == nil {
 		exists := p.Exists(abs)
-		if exists && force {
-			_ = os.RemoveAll(abs)
-			return overrideWrite(abs, content)
-		} else if exists && !force {
+		switch exists && force {
+		case false:
 			return appendWrite(abs, content)
-		} else {
+		case true:
+			fallthrough
+		default:
+			_ = os.RemoveAll(abs)
 			return overrideWrite(abs, content)
 		}
 	} else {
@@ -55,7 +56,7 @@ func appendWrite(path, content string) error {
 // @param content 写入内容
 // @return error 错误信息
 func overrideWrite(path, content string) error {
-	err := p.Ensure(path)
+	err := p.Ensure(path, false)
 	if err != nil {
 		return err
 	}
