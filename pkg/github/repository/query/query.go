@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
-
-	"github.com/jianlu8023/go-tools/pkg/replace"
+	"github.com/jianlu8023/go-tools/v2/pkg/format/replace"
 )
 
 var (
