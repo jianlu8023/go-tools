@@ -11,6 +11,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-colorable v0.1.13
 	github.com/mattn/go-isatty v0.0.20
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/shirou/gopsutil/v4 v4.24.10
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/crypto v0.23.0
@@ -21,6 +22,7 @@ replace (
 	// chainmaker.org/chainmaker/sdk-go/v2 => chainmaker.org/chainmaker/sdk-go/v2 v2.3.0
 	github.com/araddon/dateparse => github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/json-iterator/go => github.com/json-iterator/go v1.1.12
+	github.com/mitchellh/go-homedir => github.com/mitchellh/go-homedir v1.1.0
 	github.com/shirou/gopsutil/v4 => github.com/shirou/gopsutil/v4 v4.24.10
 )
 

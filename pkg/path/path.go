@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/mitchellh/go-homedir"
 )
 
 // WriteToFile 写入文件
@@ -676,4 +678,15 @@ func GetWorkDir() (string, error) {
 		return "", err
 	}
 	return wd, nil
+}
+
+// GetHomeDir 获取home文件夹
+// @return string home文件夹
+// @return error 错误信息
+func GetHomeDir() (string, error) {
+	home, err := homedir.Dir()
+	if err != nil {
+		return "", err
+	}
+	return home, nil
 }
