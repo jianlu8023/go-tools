@@ -1,11 +1,11 @@
 package info
 
 import (
+	"github.com/jianlu8023/go-tools/v2/pkg/bytes"
+	"github.com/jianlu8023/go-tools/v2/pkg/json"
 	"runtime"
 	"time"
 
-	"github.com/jianlu8023/go-tools/v2/pkg/helper/bytehelper"
-	"github.com/jianlu8023/go-tools/v2/pkg/helper/json"
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/mem"
@@ -19,8 +19,8 @@ type Server struct {
 }
 
 func (s *Server) String() string {
-	bytes, _ := json.Marshal(s)
-	return string(bytes)
+	str, _ := json.MarshalString(s)
+	return str
 }
 
 type Os struct {
@@ -32,8 +32,8 @@ type Os struct {
 }
 
 func (s *Os) String() string {
-	bytes, _ := json.Marshal(s)
-	return string(bytes)
+	str, _ := json.MarshalString(s)
+	return str
 }
 
 // InitOS 初始化系统信息
@@ -55,8 +55,8 @@ type Cpu struct {
 }
 
 func (s *Cpu) String() string {
-	bytes, _ := json.Marshal(s)
-	return string(bytes)
+	str, _ := json.MarshalString(s)
+	return str
 }
 
 // InitCPU 获取CPU信息
@@ -86,8 +86,8 @@ type Ram struct {
 }
 
 func (s *Ram) String() string {
-	bytes, _ := json.Marshal(s)
-	return string(bytes)
+	str, _ := json.MarshalString(s)
+	return str
 }
 
 // InitRAM RAM信息
@@ -98,10 +98,10 @@ func InitRAM() (r Ram, err error) {
 	if u, err := mem.VirtualMemory(); err != nil {
 		return r, err
 	} else {
-		r.Free = bytehelper.HumanBytes1024(u.Free)
-		r.Available = bytehelper.HumanBytes1024(u.Available)
-		r.Used = bytehelper.HumanBytes1024(u.Used)
-		r.Total = bytehelper.HumanBytes1024(u.Total)
+		r.Free = bytes.HumanBinary(u.Free)
+		r.Available = bytes.HumanBinary(u.Available)
+		r.Used = bytes.HumanBinary(u.Used)
+		r.Total = bytes.HumanBinary(u.Total)
 		r.UsedPercentage = u.UsedPercent
 	}
 	return r, nil
@@ -120,8 +120,8 @@ type Disk struct {
 }
 
 func (s *Disk) String() string {
-	bytes, _ := json.Marshal(s)
-	return string(bytes)
+	str, _ := json.MarshalString(s)
+	return str
 }
 
 // InitDisk 硬盘信息
@@ -141,9 +141,9 @@ func InitDisk() (d []Disk, err error) {
 		} else {
 			d = append(d, Disk{
 				MountPoint:        partition.Mountpoint,
-				Free:              bytehelper.HumanBytes1024(usage.Free),
-				Used:              bytehelper.HumanBytes1024(usage.Used),
-				Total:             bytehelper.HumanBytes1024(usage.Total),
+				Free:              bytes.HumanBinary(usage.Free),
+				Used:              bytes.HumanBinary(usage.Used),
+				Total:             bytes.HumanBinary(usage.Total),
 				UsedPercentage:    usage.UsedPercent,
 				InodesFree:        usage.InodesFree,
 				InodesUsed:        usage.InodesUsed,

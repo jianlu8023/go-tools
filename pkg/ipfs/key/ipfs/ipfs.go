@@ -11,8 +11,7 @@ import (
 // @return error 错误信息
 func GenerateKey() (string, error) {
 	key := make([]byte, 32)
-	_, err := rand.Read(key)
-	if err != err {
+	if _, err := rand.Read(key); err != nil {
 		return "", err
 	}
 	var str string

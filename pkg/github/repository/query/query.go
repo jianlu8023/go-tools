@@ -2,9 +2,9 @@ package query
 
 import (
 	"fmt"
+	"github.com/jianlu8023/go-tools/v2/pkg/stringer"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/jianlu8023/go-tools/v2/pkg/format/replace"
 )
 
 var (
@@ -28,7 +28,7 @@ func GitHubAllRepository(owner, token string) (*resty.Response, error) {
 		authorization := fmt.Sprintf("Bearer %s", token)
 		headers["Authorization"] = authorization
 	}
-	url := replace.Replace(queryAll, map[string]string{
+	url := stringer.Replace(queryAll, map[string]string{
 		"{{owner}}": owner,
 	})
 	response, err := clt.R().SetHeaders(headers).Get(url)
@@ -55,7 +55,7 @@ func GitHubRepository(owner, repo, token string) (*resty.Response, error) {
 		headers["Authorization"] = authorization
 	}
 
-	url := replace.Replace(queryRepo, map[string]string{
+	url := stringer.Replace(queryRepo, map[string]string{
 		"{{owner}}": owner,
 		"{{repo}}":  repo,
 	})
