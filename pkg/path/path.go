@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/facebookgo/atomicfile"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -44,7 +45,7 @@ func WriteToFile(path string, content string, force bool) error {
 	}
 
 	// 创建新文件
-	file, err := os.Create(path)
+	file, err := atomicfile.New(path, os.FileMode(0o644))
 	if err != nil {
 		return err
 	}
@@ -176,7 +177,7 @@ func IsDirEmpty(dirPath string) (bool, error) {
 // CreateFile 创建文件
 func CreateFile(filePath string) error {
 	// 创建文件
-	file, err := os.Create(filePath)
+	file, err := atomicfile.New(filePath, os.FileMode(0o644))
 	if err != nil {
 		return err
 	}
@@ -355,7 +356,7 @@ func FileCopy(src string, dst string) error {
 		}
 	}()
 	// 创建目标文件
-	dstFile, err := os.Create(dst)
+	dstFile, err := atomicfile.New(dst, os.FileMode(0o644))
 	if err != nil {
 		return err
 	}
