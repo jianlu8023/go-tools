@@ -18,6 +18,7 @@ require (
 	github.com/shirou/gopsutil/v4 v4.24.10
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/crypto v0.23.0
+	golang.org/x/sys v0.26.0
 )
 
 replace (
@@ -28,6 +29,7 @@ replace (
 	github.com/json-iterator/go => github.com/json-iterator/go v1.1.12
 	github.com/mitchellh/go-homedir => github.com/mitchellh/go-homedir v1.1.0
 	github.com/shirou/gopsutil/v4 => github.com/shirou/gopsutil/v4 v4.24.10
+	golang.org/x/sys => golang.org/x/sys v0.26.0
 )
 
 require (
@@ -60,7 +62,6 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/net v0.25.0 // indirect
-	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.15.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect

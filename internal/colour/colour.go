@@ -16,6 +16,23 @@ type (
 
 // Color styles
 const (
+	// R reset emphasis style
+	R = "0"
+	// B bold emphasis style
+	B = "1"
+	// D dim emphasis style
+	D = "2"
+	// I italic emphasis style
+	I = "3"
+	// U underline emphasis style
+	U = "4"
+	// In inverse emphasis style
+	In = "7"
+	// H hidden emphasis style
+	H = "8"
+	// S strikeout emphasis style
+	S = "9"
+
 	// Blk Black text style
 	Blk = "30"
 	// Rd red text style
@@ -51,23 +68,30 @@ const (
 	CynBg = "46"
 	// WhtBg white background style
 	WhtBg = "47"
+)
 
-	// R reset emphasis style
-	R = "0"
-	// B bold emphasis style
-	B = "1"
-	// D dim emphasis style
-	D = "2"
-	// I italic emphasis style
-	I = "3"
-	// U underline emphasis style
-	U = "4"
-	// In inverse emphasis style
-	In = "7"
-	// H hidden emphasis style
-	H = "8"
-	// S strikeout emphasis style
-	S = "9"
+// Hi-Intensity Foreground Colors
+const (
+	HiBlk = "90" // Hi-Intensity Black
+	HiRd  = "91" // Hi-Intensity Red
+	HiGrn = "92" // Hi-Intensity Green
+	HiYel = "93" // Hi-Intensity Yellow
+	HiBlu = "94" // Hi-Intensity Blue
+	HiMgn = "95" // Hi-Intensity Magenta
+	HiCyn = "96" // Hi-Intensity Cyan
+	HiWht = "97" // Hi-Intensity White
+)
+
+// Hi-Intensity Background Colors
+const (
+	HiBlkBg = "100" // Hi-Intensity Black Background
+	HiRdBg  = "101" // Hi-Intensity Red Background
+	HiGrnBg = "102" // Hi-Intensity Green Background
+	HiYelBg = "103" // Hi-Intensity Yellow Background
+	HiBluBg = "104" // Hi-Intensity Blue Background
+	HiMgnBg = "105" // Hi-Intensity Magenta Background
+	HiCynBg = "106" // Hi-Intensity Cyan Background
+	HiWhtBg = "107" // Hi-Intensity White Background =
 )
 
 var (

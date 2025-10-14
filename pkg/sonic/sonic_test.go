@@ -46,7 +46,7 @@ func TestBasicCodec(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// 测试编码
-			b, err := NewDefaultSonic().Marshal(tt.data)
+			b, err := Marshal(tt.data)
 			if tt.expectErr {
 				assert.Error(t, err)
 			} else {
@@ -57,7 +57,7 @@ func TestBasicCodec(t *testing.T) {
 			// 测试解码 (使用相同类型)
 			if !tt.expectErr {
 				var decoded interface{}
-				assert.NoError(t, NewDefaultSonic().Unmarshal(b, &decoded))
+				assert.NoError(t, Unmarshal(b, &decoded))
 			}
 		})
 	}
@@ -75,14 +75,14 @@ func TestMarshalPretty(t *testing.T) {
 	}
 
 	// 测试美化输出
-	prettyJSON, err := NewDefaultSonic().MarshalPretty(data)
+	prettyJSON, err := MarshalPretty(data)
 	assert.NoError(t, err)
 	assert.Contains(t, string(prettyJSON), "\n")
 	assert.Contains(t, string(prettyJSON), "  ") // 检查缩进
 
 	// 验证美化后的JSON可以正常解析
 	var decoded map[string]interface{}
-	assert.NoError(t, NewDefaultSonic().Unmarshal(prettyJSON, &decoded))
+	assert.NoError(t, Unmarshal(prettyJSON, &decoded))
 	assert.Equal(t, data["name"], decoded["name"])
 }
 
@@ -93,7 +93,7 @@ func TestMarshalString(t *testing.T) {
 		"age":  30,
 	}
 
-	jsonStr, err := NewDefaultSonic().MarshalString(data)
+	jsonStr, err := MarshalString(data)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, jsonStr)
 	assert.Contains(t, jsonStr, "name")
@@ -107,7 +107,7 @@ func TestUnmarshalString(t *testing.T) {
 	jsonStr := `{"name":"John","age":30}`
 
 	var data map[string]interface{}
-	err := NewDefaultSonic().UnmarshalString(jsonStr, &data)
+	err := UnmarshalString(jsonStr, &data)
 	assert.NoError(t, err)
 	assert.Equal(t, "John", data["name"])
 	assert.Equal(t, float64(30), data["age"])
@@ -115,7 +115,7 @@ func TestUnmarshalString(t *testing.T) {
 	// 测试空字符串
 	emptyStr := ""
 	var emptyData map[string]interface{}
-	err = NewDefaultSonic().UnmarshalString(emptyStr, &emptyData)
+	err = UnmarshalString(emptyStr, &emptyData)
 	assert.NoError(t, err)
 }
 
@@ -129,7 +129,7 @@ func TestFileOperations(t *testing.T) {
 	}
 
 	// 测试写入文件
-	err := NewDefaultSonic().WriteToFile(fileName, data)
+	err := WriteToFile(fileName, data)
 	assert.NoError(t, err)
 
 	// 验证文件存在
@@ -139,7 +139,7 @@ func TestFileOperations(t *testing.T) {
 
 	// 测试从文件读取
 	var readData map[string]interface{}
-	err = NewDefaultSonic().ReadFromFile(fileName, &readData)
+	err = ReadFromFile(fileName, &readData)
 	assert.NoError(t, err)
 	assert.Equal(t, data["name"], readData["name"])
 	// JSON解析时数字会变成float64，需要进行类型转换比较
@@ -147,7 +147,7 @@ func TestFileOperations(t *testing.T) {
 
 	// 测试读取不存在的文件
 	var nonExistentData map[string]interface{}
-	err = NewDefaultSonic().ReadFromFile("non-existent-file.json", &nonExistentData)
+	err = ReadFromFile("non-existent-file.json", &nonExistentData)
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, ErrFileNotFound))
 
@@ -155,7 +155,7 @@ func TestFileOperations(t *testing.T) {
 	invalidFileName := filepath.Join(t.TempDir(), "invalid.json")
 	os.WriteFile(invalidFileName, []byte("this is not JSON"), 0644)
 	var invalidData map[string]interface{}
-	err = NewDefaultSonic().ReadFromFile(invalidFileName, &invalidData)
+	err = ReadFromFile(invalidFileName, &invalidData)
 	assert.Error(t, err)
 	assert.True(t, errors.Is(err, ErrInvalidJSON))
 }
@@ -186,7 +186,7 @@ func TestValidate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := NewDefaultSonic().Validate(tt.jsonStr)
+			result := Validate(tt.jsonStr)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -207,7 +207,7 @@ func TestCompact(t *testing.T) {
 	expectedCompact := `{"name":"John","age":30,"address":{"street":"123 Main St","city":"Anytown"}}`
 
 	// 测试压缩
-	compactJSON, err := NewDefaultSonic().Compact(prettyJSON)
+	compactJSON, err := Compact(prettyJSON)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedCompact, compactJSON)
 	assert.NotContains(t, compactJSON, "\n")
@@ -215,12 +215,12 @@ func TestCompact(t *testing.T) {
 
 	// 测试无效JSON的压缩
 	invalidJSON := `{"name":"John",}`
-	_, err = NewDefaultSonic().Compact(invalidJSON)
+	_, err = Compact(invalidJSON)
 	assert.Error(t, err)
 
 	// 测试压缩已压缩的JSON
 	alreadyCompact := expectedCompact
-	result, err := NewDefaultSonic().Compact(alreadyCompact)
+	result, err := Compact(alreadyCompact)
 	assert.NoError(t, err)
 	assert.Equal(t, alreadyCompact, result) // 应该保持不变
 }
@@ -231,7 +231,7 @@ func ExampleMarshal() {
 		"name": "John",
 		"age":  30,
 	}
-	bytes, _ := NewDefaultSonic().Marshal(data)
+	bytes, _ := Marshal(data)
 	fmt.Println(string(bytes))
 }
 
@@ -240,6 +240,6 @@ func ExampleMarshalPretty() {
 		"name": "John",
 		"age":  30,
 	}
-	bytes, _ := NewDefaultSonic().MarshalPretty(data)
+	bytes, _ := MarshalPretty(data)
 	fmt.Println(string(bytes))
 }
