@@ -114,6 +114,26 @@ var (
 	cyanBg    = outer(CynBg)
 	whiteBg   = outer(WhtBg)
 
+	// High-intensity foreground colors
+	hiBlack   = outer(HiBlk)
+	hiRed     = outer(HiRd)
+	hiGreen   = outer(HiGrn)
+	hiYellow  = outer(HiYel)
+	hiBlue    = outer(HiBlu)
+	hiMagenta = outer(HiMgn)
+	hiCyan    = outer(HiCyn)
+	hiWhite   = outer(HiWht)
+
+	// High-intensity background colors
+	hiBlackBg   = outer(HiBlkBg)
+	hiRedBg     = outer(HiRdBg)
+	hiGreenBg   = outer(HiGrnBg)
+	hiYellowBg  = outer(HiYelBg)
+	hiBlueBg    = outer(HiBluBg)
+	hiMagentaBg = outer(HiMgnBg)
+	hiCyanBg    = outer(HiCynBg)
+	hiWhiteBg   = outer(HiWhtBg)
+
 	reset     = outer(R)
 	bold      = outer(B)
 	dim       = outer(D)
@@ -297,6 +317,74 @@ func (c *Color) Strikeout(msg interface{}, styles ...string) string {
 	return strikeout(msg, styles, c)
 }
 
+// High-intensity foreground color methods
+
+func (c *Color) HiBlack(msg interface{}, styles ...string) string {
+	return hiBlack(msg, styles, c)
+}
+
+func (c *Color) HiRed(msg interface{}, styles ...string) string {
+	return hiRed(msg, styles, c)
+}
+
+func (c *Color) HiGreen(msg interface{}, styles ...string) string {
+	return hiGreen(msg, styles, c)
+}
+
+func (c *Color) HiYellow(msg interface{}, styles ...string) string {
+	return hiYellow(msg, styles, c)
+}
+
+func (c *Color) HiBlue(msg interface{}, styles ...string) string {
+	return hiBlue(msg, styles, c)
+}
+
+func (c *Color) HiMagenta(msg interface{}, styles ...string) string {
+	return hiMagenta(msg, styles, c)
+}
+
+func (c *Color) HiCyan(msg interface{}, styles ...string) string {
+	return hiCyan(msg, styles, c)
+}
+
+func (c *Color) HiWhite(msg interface{}, styles ...string) string {
+	return hiWhite(msg, styles, c)
+}
+
+// High-intensity background color methods
+
+func (c *Color) HiBlackBg(msg interface{}, styles ...string) string {
+	return hiBlackBg(msg, styles, c)
+}
+
+func (c *Color) HiRedBg(msg interface{}, styles ...string) string {
+	return hiRedBg(msg, styles, c)
+}
+
+func (c *Color) HiGreenBg(msg interface{}, styles ...string) string {
+	return hiGreenBg(msg, styles, c)
+}
+
+func (c *Color) HiYellowBg(msg interface{}, styles ...string) string {
+	return hiYellowBg(msg, styles, c)
+}
+
+func (c *Color) HiBlueBg(msg interface{}, styles ...string) string {
+	return hiBlueBg(msg, styles, c)
+}
+
+func (c *Color) HiMagentaBg(msg interface{}, styles ...string) string {
+	return hiMagentaBg(msg, styles, c)
+}
+
+func (c *Color) HiCyanBg(msg interface{}, styles ...string) string {
+	return hiCyanBg(msg, styles, c)
+}
+
+func (c *Color) HiWhiteBg(msg interface{}, styles ...string) string {
+	return hiWhiteBg(msg, styles, c)
+}
+
 // Output returns the output.
 func Output() io.Writer {
 	return global.output
@@ -428,4 +516,72 @@ func Hidden(msg interface{}, styles ...string) string {
 
 func Strikeout(msg interface{}, styles ...string) string {
 	return global.Strikeout(msg, styles...)
+}
+
+// High-intensity foreground color global functions
+
+func HiBlack(msg interface{}, styles ...string) string {
+	return global.HiBlack(msg, styles...)
+}
+
+func HiRed(msg interface{}, styles ...string) string {
+	return global.HiRed(msg, styles...)
+}
+
+func HiGreen(msg interface{}, styles ...string) string {
+	return global.HiGreen(msg, styles...)
+}
+
+func HiYellow(msg interface{}, styles ...string) string {
+	return global.HiYellow(msg, styles...)
+}
+
+func HiBlue(msg interface{}, styles ...string) string {
+	return global.HiBlue(msg, styles...)
+}
+
+func HiMagenta(msg interface{}, styles ...string) string {
+	return global.HiMagenta(msg, styles...)
+}
+
+func HiCyan(msg interface{}, styles ...string) string {
+	return global.HiCyan(msg, styles...)
+}
+
+func HiWhite(msg interface{}, styles ...string) string {
+	return global.HiWhite(msg, styles...)
+}
+
+// High-intensity background color global functions
+
+func HiBlackBg(msg interface{}, styles ...string) string {
+	return global.HiBlackBg(msg, styles...)
+}
+
+func HiRedBg(msg interface{}, styles ...string) string {
+	return global.HiRedBg(msg, styles...)
+}
+
+func HiGreenBg(msg interface{}, styles ...string) string {
+	return global.HiGreenBg(msg, styles...)
+}
+
+func HiYellowBg(msg interface{}, styles ...string) string {
+	return global.HiYellowBg(msg, styles...)
+}
+
+func HiBlueBg(msg interface{}, styles ...string) string {
+	return global.HiBlueBg(msg, styles...)
+}
+
+func HiMagentaBg(msg interface{}, styles ...string) string {
+	return global.HiMagentaBg(msg, styles...)
+}
+
+func HiCyanBg(msg interface{}, styles ...string) string {
+	return global.HiCyanBg(msg, styles...)
+}
+
+func HiWhiteBg(msg interface{}, styles ...string) string {
+	return global.HiWhiteBg(msg, styles...)
 }

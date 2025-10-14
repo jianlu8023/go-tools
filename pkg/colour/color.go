@@ -45,3 +45,25 @@ func Underline(str string) string { return c.Underline(str) }
 func Inverse(str string) string   { return c.Inverse(str) }
 func Hidden(str string) string    { return c.Hidden(str) }
 func Strikeout(str string) string { return c.Strikeout(str) }
+
+// High-intensity foreground colors
+
+func HiBlack(str string) string   { return c.HiBlack(str) }
+func HiRed(str string) string     { return c.HiRed(str) }
+func HiGreen(str string) string   { return c.HiGreen(str) }
+func HiYellow(str string) string  { return c.HiYellow(str) }
+func HiBlue(str string) string    { return c.HiBlue(str) }
+func HiMagenta(str string) string { return c.HiMagenta(str) }
+func HiCyan(str string) string    { return c.HiCyan(str) }
+func HiWhite(str string) string   { return c.HiWhite(str) }
+
+// High-intensity background colors
+
+func HiBlackBg(str string) string   { return c.HiBlackBg(str) }
+func HiRedBg(str string) string     { return c.HiRedBg(str) }
+func HiGreenBg(str string) string   { return c.HiGreenBg(str) }
+func HiYellowBg(str string) string  { return c.HiYellowBg(str) }
+func HiBlueBg(str string) string    { return c.HiBlueBg(str) }
+func HiMagentaBg(str string) string { return c.HiMagentaBg(str) }
+func HiCyanBg(str string) string    { return c.HiCyanBg(str) }
+func HiWhiteBg(str string) string   { return c.HiWhiteBg(str) }

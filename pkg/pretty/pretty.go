@@ -62,10 +62,8 @@ func (f *Formatter) pretty(v interface{}, depth int) string {
 	switch val := v.(type) {
 	case string:
 		return f.processString(val)
-	case float64:
-		return f.sprintFgCyan(strconv.FormatFloat(val, 'f', -1, 64))
-	// case json.Number:
-	// return f.sprintColor(f.NumberColor, string(val))
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64, float32, float64:
+		return f.sprintNumber(val)
 	case bool:
 		return f.sprintFgYellow(strconv.FormatBool(val))
 	case nil:
@@ -74,6 +72,9 @@ func (f *Formatter) pretty(v interface{}, depth int) string {
 		return f.processMap(val, depth)
 	case []interface{}:
 		return f.processArray(val, depth)
+	default:
+		// 处理其他可能的类型
+		return fmt.Sprintf("%v", val)
 	}
 
 	return ""
@@ -153,39 +154,72 @@ func (f *Formatter) generateIndent(depth int) string {
 	return strings.Repeat(" ", f.Indent*depth)
 }
 
-func (f *Formatter) sprintFgCyan(s string) string {
+// sprintColor 是一个通用的颜色输出函数，避免代码重复
+func (f *Formatter) sprintColor(colorFunc func(interface{}, ...string) string, s string) string {
 	if f.DisabledColor {
 		return fmt.Sprint(s)
 	}
-	return colour.Cyan(s, colour.B)
+	return colorFunc(s, colour.B)
+}
+
+func (f *Formatter) sprintFgCyan(s string) string {
+	return f.sprintColor(colour.Cyan, s)
 }
 
 func (f *Formatter) sprintFgYellow(s string) string {
-	if f.DisabledColor {
-		return fmt.Sprint(s)
-	}
-	return colour.Yellow(s, colour.B)
+	return f.sprintColor(colour.Yellow, s)
 }
 
 func (f *Formatter) sprintFgBlack(s string) string {
-	if f.DisabledColor {
-		return fmt.Sprint(s)
-	}
-	return colour.Black(s, colour.B)
+	return f.sprintColor(colour.Black, s)
 }
 
 func (f *Formatter) sprintFgGreen(s string) string {
-	if f.DisabledColor {
-		return fmt.Sprint(s)
-	}
-	return colour.Green(s, colour.B)
+	return f.sprintColor(colour.Green, s)
 }
 
 func (f *Formatter) sprintFgBlue(s string) string {
-	if f.DisabledColor {
-		return fmt.Sprint(s)
+	return f.sprintColor(colour.Blue, s)
+}
+
+// 支持更多数字类型的输出
+func (f *Formatter) sprintNumber(n interface{}) string {
+	var s string
+	// 根据实际类型格式化数字，避免精度问题
+	switch num := n.(type) {
+	case int:
+		s = strconv.Itoa(num)
+	case int8:
+		s = strconv.FormatInt(int64(num), 10)
+	case int16:
+		s = strconv.FormatInt(int64(num), 10)
+	case int32:
+		s = strconv.FormatInt(int64(num), 10)
+	case int64:
+		s = strconv.FormatInt(num, 10)
+	case uint:
+		s = strconv.FormatUint(uint64(num), 10)
+	case uint8:
+		s = strconv.FormatUint(uint64(num), 10)
+	case uint16:
+		s = strconv.FormatUint(uint64(num), 10)
+	case uint32:
+		s = strconv.FormatUint(uint64(num), 10)
+	case uint64:
+		s = strconv.FormatUint(num, 10)
+	case float32:
+		s = strconv.FormatFloat(float64(num), 'f', -1, 32)
+	case float64:
+		// 对于整数的浮点数，移除小数点
+		if num == float64(int64(num)) {
+			s = strconv.FormatInt(int64(num), 10)
+		} else {
+			s = strconv.FormatFloat(num, 'f', -1, 64)
+		}
+	default:
+		s = fmt.Sprintf("%v", num)
 	}
-	return colour.Blue(s, colour.B)
+	return f.sprintFgCyan(s)
 }
 
 // Marshal JSON data with default options.
