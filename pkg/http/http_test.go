@@ -303,6 +303,7 @@ func TestShortcutFunctions(t *testing.T) {
 	statusCode, err = PostJSON(server.URL, nil, &resp2)
 	assert.NoError(t, err, "PostJSON快捷函数失败")
 	assert.Equal(t, http.StatusOK, statusCode, "PostJSON快捷函数响应状态码错误")
+
 }
 
 // 测试错误处理
@@ -496,4 +497,188 @@ func TestHeadersSetting(t *testing.T) {
 	assert.Equal(t, http.StatusOK, statusCode, "带多个请求头的GET响应状态码错误")
 	assert.Contains(t, string(body), `"header1":"value1"`, "第一个请求头设置错误")
 	assert.Contains(t, string(body), `"header2":"value2"`, "第二个请求头设置错误")
+}
+
+// 测试流式调用功能
+func TestStream(t *testing.T) {
+	// 创建模拟流式响应的测试服务器
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Connection", "keep-alive")
+
+		// 模拟流式发送数据
+		data := []string{
+			"data: {\"id\":\"1\",\"content\":\"Hello\"}\n\n",
+			"data: {\"id\":\"2\",\"content\":\"World\"}\n\n",
+			"data: {\"id\":\"3\",\"content\":\"!\"}\n\n",
+		}
+
+		for _, d := range data {
+			w.Write([]byte(d))
+			w.(http.Flusher).Flush()
+			time.Sleep(10 * time.Millisecond) // 模拟延迟
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient()
+
+	// 收集接收到的数据
+	var receivedData []string
+	var endSignal bool
+
+	// 定义回调函数
+	callback := func(data []byte, err error) bool {
+		if err != nil {
+			t.Errorf("流式调用出错: %v", err)
+			return false
+		}
+
+		if data == nil {
+			// 结束信号
+			endSignal = true
+			return false
+		}
+
+		receivedData = append(receivedData, string(data))
+		return true // 继续接收数据
+	}
+
+	// 测试StreamPOST方法
+	err := client.StreamPOST(server.URL, map[string]interface{}{"message": "hello"}, callback)
+	assert.NoError(t, err, "流式POST请求失败")
+
+	// 验证是否收到了所有数据
+	assert.True(t, endSignal, "应该收到结束信号")
+	assert.Greater(t, len(receivedData), 0, "应该收到数据")
+
+	// 验证数据内容
+	allData := ""
+	for _, d := range receivedData {
+		allData += d
+	}
+	assert.Contains(t, allData, "Hello", "应该包含Hello")
+	assert.Contains(t, allData, "World", "应该包含World")
+	assert.Contains(t, allData, "!", "应该包含!")
+}
+
+// 测试流式GET调用功能
+func TestStreamGET(t *testing.T) {
+	// 创建模拟流式响应的测试服务器
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+
+		// 根据查询参数返回不同数据
+		query := r.URL.Query()
+		name := query.Get("name")
+
+		if name != "" {
+			w.Write([]byte(fmt.Sprintf("data: Hello, %s!\n\n", name)))
+		} else {
+			w.Write([]byte("data: Hello, World!\n\n"))
+		}
+
+		w.(http.Flusher).Flush()
+	}))
+	defer server.Close()
+
+	client := NewClient()
+
+	// 收集接收到的数据
+	var receivedData string
+
+	// 定义回调函数
+	callback := func(data []byte, err error) bool {
+		if err != nil {
+			t.Errorf("流式调用出错: %v", err)
+			return false
+		}
+
+		if data != nil {
+			receivedData += string(data)
+		}
+		return false // 只接收一次数据就停止
+	}
+
+	// 测试StreamGET方法
+	err := client.StreamGET(server.URL, map[string]interface{}{"name": "Test"}, callback)
+	assert.NoError(t, err, "流式GET请求失败")
+
+	// 验证数据内容
+	assert.Contains(t, receivedData, "Hello, Test!", "应该包含查询参数中的名字")
+}
+
+// 测试流式调用错误处理
+func TestStreamErrorHandling(t *testing.T) {
+	// 创建返回错误的测试服务器
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(`{"error":"internal server error"}`))
+	}))
+	defer server.Close()
+
+	client := NewClient()
+
+	// 记录是否收到了错误
+	var errorCallbackCalled bool
+
+	// 定义回调函数
+	callback := func(data []byte, err error) bool {
+		if err != nil {
+			errorCallbackCalled = true
+			return false
+		}
+		return true
+	}
+
+	// 测试StreamPOST方法，应该返回错误
+	err := client.StreamPOST(server.URL, map[string]interface{}{"message": "hello"}, callback)
+	assert.Error(t, err, "流式请求应该返回错误")
+	assert.True(t, errorCallbackCalled, "应该调用错误回调")
+	assert.Contains(t, err.Error(), "状态码: 500", "错误信息应该包含状态码")
+}
+
+// 测试快捷流式函数
+func TestStreamShortcutFunctions(t *testing.T) {
+	// 创建模拟流式响应的测试服务器
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.Header().Set("Cache-Control", "no-cache")
+
+		// 发送简单数据
+		w.Write([]byte("data: shortcut test\n\n"))
+		w.(http.Flusher).Flush()
+	}))
+	defer server.Close()
+
+	// 收集接收到的数据
+	var receivedData string
+
+	// 定义回调函数
+	callback := func(data []byte, err error) bool {
+		if err != nil {
+			t.Errorf("流式调用出错: %v", err)
+			return false
+		}
+
+		if data != nil {
+			receivedData += string(data)
+		}
+		return false // 只接收一次数据就停止
+	}
+
+	// 测试StreamPOST快捷函数
+	err := StreamPOST(server.URL, map[string]interface{}{"message": "hello"}, callback)
+	assert.NoError(t, err, "StreamPOST快捷函数失败")
+	assert.Contains(t, receivedData, "shortcut test", "应该接收到数据")
+
+	// 重置数据
+	receivedData = ""
+
+	// 测试StreamGET快捷函数
+	err = StreamGET(server.URL, nil, callback)
+	assert.NoError(t, err, "StreamGET快捷函数失败")
+	assert.Contains(t, receivedData, "shortcut test", "应该接收到数据")
 }

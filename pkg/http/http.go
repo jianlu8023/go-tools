@@ -3,9 +3,11 @@ package http
 import (
 	"crypto/tls"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
+	"io"
 	"net/http"
 	"time"
+
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -486,6 +488,139 @@ func (c *Client) SetTLSClientConfig(config *tls.Config) *Client {
 	return c
 }
 
+// StreamCallback 定义流式响应的回调函数类型
+// @param data: 接收到的数据片段
+// @param err: 错误信息，如果有的话
+// @return bool: 是否继续接收数据，true表示继续，false表示停止
+type StreamCallback func(data []byte, err error) bool
+
+// Stream 发送流式请求并处理响应
+// @param method: HTTP方法
+// @param url: 请求URL
+// @param headers: 请求头
+// @param body: 请求体
+// @param callback: 处理流式响应的回调函数
+// @return error: 错误信息
+func (c *Client) Stream(method, url string, headers map[string]string, body interface{}, callback StreamCallback) error {
+	// 创建请求
+	r := c.client.R()
+
+	// 设置路径参数
+	if len(c.PathParams) > 0 {
+		r.SetPathParams(c.PathParams)
+	}
+
+	// 设置请求头
+	if headers != nil {
+		r.SetHeaders(headers)
+	}
+
+	// 设置请求体
+	if body != nil {
+		r.SetBody(body)
+	}
+
+	// 启用跟踪
+	if c.EnableTrace {
+		r.EnableTrace()
+	}
+
+	// 不自动解析响应体，而是直接获取原始响应
+	r.SetDoNotParseResponse(true)
+
+	// 执行请求
+	resp, err := r.Execute(method, url)
+	if err != nil {
+		callback(nil, fmt.Errorf("请求失败: %v", err))
+		return err
+	}
+
+	// 检查响应状态码
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		// 读取错误响应体（如果有的话）
+		if resp.RawResponse != nil && resp.RawResponse.Body != nil {
+			defer resp.RawResponse.Body.Close()
+			body, _ := io.ReadAll(resp.RawResponse.Body)
+			callback(nil, fmt.Errorf("请求失败，状态码: %d, 响应: %s", resp.StatusCode(), string(body)))
+		} else {
+			callback(nil, fmt.Errorf("请求失败，状态码: %d", resp.StatusCode()))
+		}
+		return fmt.Errorf("请求失败，状态码: %d", resp.StatusCode())
+	}
+
+	// 获取原始响应体
+	if resp.RawResponse == nil || resp.RawResponse.Body == nil {
+		err := fmt.Errorf("无法获取响应体")
+		callback(nil, err)
+		return err
+	}
+
+	reader := resp.RawResponse.Body
+	defer reader.Close()
+
+	// 处理流式响应
+	buf := make([]byte, 1024)
+	for {
+		n, err := reader.Read(buf)
+		if n > 0 {
+			// 将读取到的数据传递给回调函数
+			if !callback(buf[:n], nil) {
+				break // 用户选择停止接收数据
+			}
+		}
+
+		if err != nil {
+			if err == io.EOF {
+				// 流结束，正常退出
+				callback(nil, nil) // 发送一个结束信号
+				break
+			} else {
+				// 其他错误
+				callback(nil, err)
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// StreamGET 发送GET流式请求
+// @param url: 请求URL
+// @param params: URL查询参数
+// @param callback: 处理流式响应的回调函数
+// @return error: 错误信息
+func (c *Client) StreamGET(url string, params map[string]interface{}, callback StreamCallback) error {
+	// 设置查询参数
+	if params != nil {
+		for k, v := range params {
+			c.client.SetQueryParam(k, fmt.Sprintf("%v", v))
+		}
+	}
+
+	return c.Stream("GET", url, nil, nil, callback)
+}
+
+// StreamPOST 发送POST流式请求
+// @param url: 请求URL
+// @param body: 请求体
+// @param callback: 处理流式响应的回调函数
+// @return error: 错误信息
+func (c *Client) StreamPOST(url string, body interface{}, callback StreamCallback) error {
+	return c.Stream("POST", url, nil, body, callback)
+}
+
+// StreamWithRequest 发送自定义流式请求
+// @param method: HTTP方法
+// @param url: 请求URL
+// @param headers: 请求头
+// @param body: 请求体
+// @param callback: 处理流式响应的回调函数
+// @return error: 错误信息
+func (c *Client) StreamWithRequest(method, url string, headers map[string]string, body interface{}, callback StreamCallback) error {
+	return c.Stream(method, url, headers, body, callback)
+}
+
 // 以下是快捷函数，直接使用默认客户端
 
 var defaultClient = NewClient()
@@ -568,4 +703,33 @@ func DownloadFile(url, filePath string) (int64, error) {
 // @return error: 错误信息
 func UploadFile(url, fieldName, filePath string, params map[string]string) ([]byte, int, error) {
 	return defaultClient.UploadFile(url, fieldName, filePath, params)
+}
+
+// StreamGET 发送GET流式请求(使用默认客户端)
+// @param url: 请求URL
+// @param params: URL查询参数
+// @param callback: 处理流式响应的回调函数
+// @return error: 错误信息
+func StreamGET(url string, params map[string]interface{}, callback StreamCallback) error {
+	return defaultClient.StreamGET(url, params, callback)
+}
+
+// StreamPOST 发送POST流式请求(使用默认客户端)
+// @param url: 请求URL
+// @param body: 请求体
+// @param callback: 处理流式响应的回调函数
+// @return error: 错误信息
+func StreamPOST(url string, body interface{}, callback StreamCallback) error {
+	return defaultClient.StreamPOST(url, body, callback)
+}
+
+// StreamWithRequest 发送自定义流式请求(使用默认客户端)
+// @param method: HTTP方法
+// @param url: 请求URL
+// @param headers: 请求头
+// @param body: 请求体
+// @param callback: 处理流式响应的回调函数
+// @return error: 错误信息
+func StreamWithRequest(method, url string, headers map[string]string, body interface{}, callback StreamCallback) error {
+	return defaultClient.StreamWithRequest(method, url, headers, body, callback)
 }
