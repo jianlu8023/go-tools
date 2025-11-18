@@ -2,6 +2,7 @@ package set
 
 type set[T comparable] map[T]struct{}
 
+// New 创建一个新的set
 func New[T comparable]() set[T] {
 	return make(set[T])
 }
@@ -49,21 +50,23 @@ func (s set[T]) Members() []T {
 	return values
 }
 
-// Pop 随机返回一个 删除该元素
+// Pop 随机返回一个元素并删除该元素
 func (s set[T]) Pop() T {
 	var element T
 	for key := range s {
 		element = key
 		delete(s, key)
+		break
 	}
 	return element
 }
 
-// One 随机返回一个 删除该元素
+// One 随机返回一个元素（不删除）
 func (s set[T]) One() T {
 	var element T
 	for key := range s {
 		element = key
+		break
 	}
 	return element
 }
@@ -106,6 +109,7 @@ func (s set[T]) Loop(fn func(element T)) {
 	}
 }
 
+// Diff 返回两个set的差集
 func Diff[T comparable](s1 set[T], s2 set[T]) set[T] {
 	for k := range s1 {
 		if _, ok := s2[k]; ok {
@@ -115,6 +119,7 @@ func Diff[T comparable](s1 set[T], s2 set[T]) set[T] {
 	return s1
 }
 
+// Union 返回两个set的并集
 func Union[T comparable](s1, s2 set[T]) set[T] {
 	for elem := range s2 {
 		s1[elem] = struct{}{}
@@ -122,6 +127,7 @@ func Union[T comparable](s1, s2 set[T]) set[T] {
 	return s1
 }
 
+// Intersection 返回两个set的交集
 func Intersection[T comparable](s1, s2 set[T]) set[T] {
 	for k := range s1 {
 		if _, ok := s2[k]; !ok {

@@ -32,6 +32,7 @@ replace (
 	github.com/json-iterator/go => github.com/json-iterator/go v1.1.12
 	github.com/mitchellh/go-homedir => github.com/mitchellh/go-homedir v1.1.0
 	github.com/shirou/gopsutil/v4 => github.com/shirou/gopsutil/v4 v4.24.10
+	github.com/stretchr/testify v1.10.0 => github.com/stretchr/testify v1.11.1
 	github.com/tjfoc/gmsm => github.com/tjfoc/gmsm v1.4.1
 	golang.org/x/crypto => golang.org/x/crypto v0.33.0
 	golang.org/x/sys => golang.org/x/sys v0.30.0

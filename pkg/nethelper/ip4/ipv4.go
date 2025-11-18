@@ -87,10 +87,20 @@ func IPv4Readable(ip string) bool {
 	}
 }
 
+// GetLocalIP 获取本地IPv4地址的别名函数
+//
+// 返回值:
+//   - string: 本地IPv4地址
+//   - error: 如果获取失败则返回错误
 func GetLocalIP() (string, error) {
 	return GetLocalIPv4()
 }
 
+// GetLocalIPv4 获取本地IPv4地址
+//
+// 返回值:
+//   - string: 本地IPv4地址
+//   - error: 如果获取失败则返回错误
 func GetLocalIPv4() (string, error) {
 	addrs, err := getAddrs()
 	if err != nil {
@@ -110,6 +120,11 @@ func GetLocalIPv4() (string, error) {
 	return "", errors.New("获取 IPv4 地址失败")
 }
 
+// getAddrs 获取网络接口地址列表
+//
+// 返回值:
+//   - []net.Addr: 网络接口地址列表
+//   - error: 如果获取失败则返回错误
 func getAddrs() ([]net.Addr, error) {
 	var addrss []net.Addr
 	ifaces, err := net.Interfaces()
@@ -135,6 +150,13 @@ func getAddrs() ([]net.Addr, error) {
 	return addrss, nil
 }
 
+// getLocalIP 从网络地址中提取本地IP
+//
+// 参数:
+//   - addr: 网络地址
+//
+// 返回值:
+//   - net.IP: 提取的IP地址，如果无法提取则返回nil
 func getLocalIP(addr net.Addr) net.IP {
 	var ip net.IP
 	switch v := addr.(type) {

@@ -1,5 +1,6 @@
 package concurrent
 
+// Map 定义并发安全的Map接口
 type Map[K comparable, V any] interface {
 	// Put 向 map 中添加元素
 	Put(K, V)
@@ -21,6 +22,7 @@ type Map[K comparable, V any] interface {
 	Values() []V
 }
 
+// Set 定义并发安全的Set接口
 type Set[T comparable] interface {
 	// Add 添加元素到 set
 	Add(elements ...T) Set[T]

@@ -93,6 +93,13 @@ func GetIPv6Addrs() map[string]string {
 	return IPv6Map
 }
 
+// IPv6Reachable 检查IPv6地址是否可达
+//
+// 参数:
+//   - ip: 要检查的IPv6地址
+//
+// 返回值:
+//   - bool: 如果地址可达返回true，否则返回false
 func IPv6Reachable(ip string) bool {
 	if err := netutil.Reachable(ip); err != nil {
 		return false
