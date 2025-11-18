@@ -2,6 +2,7 @@ package ip6
 
 import (
 	"net"
+	"time"
 
 	"github.com/jianlu8023/go-tools/v2/internal/netutil"
 )
@@ -10,7 +11,7 @@ import (
 // @return string:
 func GetIPv6Addr() string {
 	// 尝试使用UDP连接获取IP地址
-	conn, err := net.Dial("udp", "8.8.8.8:53")
+	conn, err := net.DialTimeout("udp", "8.8.8.8:53", 3*time.Second)
 	if err == nil {
 		defer func(conn net.Conn) {
 			_ = conn.Close()
