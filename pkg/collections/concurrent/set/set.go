@@ -147,3 +147,19 @@ func (rw *RWSet[T]) Loop(fn func(element T)) {
 		fn(elem)
 	}
 }
+
+// Iterator 返回set的迭代器
+func (rw *RWSet[T]) Iterator() concurrent.Iterator[T] {
+	rw.mutex.RLock()
+	defer rw.mutex.RUnlock()
+
+	elements := make([]T, 0, len(rw.m))
+	for elem := range rw.m {
+		elements = append(elements, elem)
+	}
+
+	return &setIterator[T]{
+		elements: elements,
+		index:    -1, // 初始化为-1，第一次调用Next时会移动到0
+	}
+}

@@ -1,5 +1,9 @@
 package set
 
+import (
+	"github.com/jianlu8023/go-tools/v2/pkg/collections/concurrent"
+)
+
 type set[T comparable] map[T]struct{}
 
 // New 创建一个新的set
@@ -106,6 +110,19 @@ func (s set[T]) Intersection(other set[T]) set[T] {
 func (s set[T]) Loop(fn func(element T)) {
 	for key := range s {
 		fn(key)
+	}
+}
+
+// Iterator 返回set的迭代器
+func (s set[T]) Iterator() concurrent.Iterator[T] {
+	elements := make([]T, 0, len(s))
+	for elem := range s {
+		elements = append(elements, elem)
+	}
+
+	return &setIterator[T]{
+		elements: elements,
+		index:    -1, // 初始化为-1，第一次调用Next时会移动到0
 	}
 }
 

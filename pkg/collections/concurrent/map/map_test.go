@@ -1,11 +1,98 @@
 package _map
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/jianlu8023/go-tools/v2/pkg/collections/concurrent"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestEntryIteratorHasNext(t *testing.T) {
+	// 创建一些测试数据
+	entries := []concurrent.Entry[string, int]{
+		{Key: "one", Value: 1},
+		{Key: "two", Value: 2},
+		{Key: "three", Value: 3},
+	}
+
+	iter := &entryIterator[string, int]{
+		entries: entries,
+		index:   -1,
+	}
+
+	// 检查初始状态
+	assert.True(t, iter.HasNext())
+	// 移动到第一个元素
+	assert.Equal(t, "one", iter.Value().Key)
+
+	// 移动到第二个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, "two", iter.Value().Key)
+
+	// 移动到第三个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, "three", iter.Value().Key)
+
+	// 再次调用Next应该返回false
+	assert.False(t, iter.HasNext())
+	assert.False(t, iter.HasNext())
+}
+
+func TestMapIteratorHasNext(t *testing.T) {
+	// 创建一些测试数据
+	entries := []concurrent.Entry[string, int]{
+		{Key: "a", Value: 1},
+		{Key: "b", Value: 2},
+	}
+
+	iter := &mapIterator[string, int]{
+		entries: entries,
+		index:   -1,
+	}
+
+	// 移动到第一个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, "a", iter.Value().Key)
+
+	// 移动到第二个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, "b", iter.Value().Key)
+
+	// 再次调用Next应该返回false
+	assert.False(t, iter.HasNext())
+	assert.False(t, iter.HasNext())
+}
+
+func TestEmptyIteratorHasNext(t *testing.T) {
+	// 测试空迭代器
+	entries := []concurrent.Entry[string, int]{}
+
+	iter := &entryIterator[string, int]{
+		entries: entries,
+		index:   -1,
+	}
+
+	// 空迭代器应该没有下一个元素
+	assert.False(t, iter.HasNext())
+	assert.False(t, iter.HasNext())
+	assert.False(t, iter.HasNext())
+}
+
+func TestIterator(t *testing.T) {
+
+	rwMap := NewRWMap[string, string]()
+	rwMap.Put("a", "1")
+	rwMap.Put("b", "2")
+	rwMap.Put("c", "3")
+	iter := rwMap.Iterator()
+	defer iter.Close()
+	for iter.HasNext() {
+		value := iter.Value()
+		fmt.Println(value.Key, value.Value)
+	}
+
+}
 
 func TestRWMap(t *testing.T) {
 	// 创建一个新的RWMap

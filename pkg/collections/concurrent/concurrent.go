@@ -20,6 +20,8 @@ type Map[K comparable, V any] interface {
 	Keys() []K
 	// Values 返回 map 所有 value
 	Values() []V
+	// Iterator 返回 map 的迭代器
+	Iterator() Iterator[Entry[K, V]]
 }
 
 // Set 定义并发安全的Set接口
@@ -50,4 +52,6 @@ type Set[T comparable] interface {
 	Intersection(other Set[T]) Set[T]
 	// Loop 遍历 set 中每个元素
 	Loop(fn func(element T))
+	// Iterator 返回 set 的迭代器
+	Iterator() Iterator[T]
 }

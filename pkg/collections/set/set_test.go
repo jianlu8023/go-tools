@@ -144,3 +144,90 @@ func TestSetLoop(t *testing.T) {
 
 	assert.Equal(t, 15, sum, "循环累加结果应该为15")
 }
+
+func TestSetIterator(t *testing.T) {
+	// 创建一个Set并添加一些数据
+	s := New[int]()
+	s.Add(1, 2, 3, 4, 5)
+
+	// 使用迭代器遍历
+	iter := s.Iterator()
+	defer iter.Close()
+
+	count := 0
+	values := make(map[int]bool)
+
+	// 遍历所有元素
+	for iter.HasNext() {
+
+		value := iter.Value()
+		values[value] = true
+		count++
+
+	}
+
+	// 验证结果
+	assert.Equal(t, 5, count)
+	assert.True(t, values[1])
+	assert.True(t, values[2])
+	assert.True(t, values[3])
+	assert.True(t, values[4])
+	assert.True(t, values[5])
+}
+
+func TestEmptySetIterator(t *testing.T) {
+	// 测试空Set的迭代器
+	s := New[int]()
+	iter := s.Iterator()
+	defer iter.Close()
+
+	// 对于空Set，HasNext应该返回false
+	assert.False(t, iter.HasNext())
+
+	// Next应该返回false
+
+}
+
+func TestSetIteratorClose(t *testing.T) {
+	// 测试关闭迭代器
+	s := New[string]()
+	s.Add("a", "b", "c")
+
+	iter := s.Iterator()
+
+	// 使用一次迭代器
+	assert.True(t, iter.HasNext())
+	value := iter.Value()
+	assert.Equal(t, "a", value)
+
+	// 关闭迭代器
+	err := iter.Close()
+	assert.NoError(t, err)
+
+	// 关闭后再次调用HasNext应该返回false
+	assert.False(t, iter.HasNext())
+
+	// 关闭后再次调用Next应该返回false
+
+}
+
+func TestSetIteratorValue(t *testing.T) {
+	// 测试Value方法的边界情况
+	s := New[int]()
+	s.Add(42)
+
+	iter := s.Iterator()
+	defer iter.Close()
+
+	// 在调用Next之前，Value应该返回零值
+	var zero int
+	assert.Equal(t, zero, iter.Value())
+
+	// 调用Next后，Value应该返回正确的值
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, 42, iter.Value())
+
+	// 超出范围后，Value应该返回零值
+	assert.False(t, iter.HasNext())
+	assert.Equal(t, zero, iter.Value())
+}

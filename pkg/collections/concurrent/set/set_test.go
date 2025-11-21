@@ -7,6 +7,112 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestSetIteratorHasNext(t *testing.T) {
+	// 创建一些测试数据
+	elements := []int{1, 2, 3, 4, 5}
+
+	iter := &setIterator[int]{
+		elements: elements,
+		index:    -1,
+	}
+
+	// 移动到第一个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, 1, iter.Value())
+
+	// 移动到第二个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, 2, iter.Value())
+
+	// 移动到第三个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, 3, iter.Value())
+
+	// 移动到第四个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, 4, iter.Value())
+
+	// 移动到第五个元素
+	assert.True(t, iter.HasNext())
+	assert.Equal(t, 5, iter.Value())
+
+	// 再次调用Next应该返回false
+	assert.False(t, iter.HasNext())
+	assert.False(t, iter.HasNext())
+}
+
+func TestEmptySetIteratorHasNext(t *testing.T) {
+	// 测试空迭代器
+	elements := []int{}
+
+	iter := &setIterator[int]{
+		elements: elements,
+		index:    -1,
+	}
+
+	// 空迭代器应该没有下一个元素
+	assert.False(t, iter.HasNext())
+	assert.False(t, iter.HasNext())
+	assert.False(t, iter.HasNext())
+}
+func TestRWSetIterator(t *testing.T) {
+	// 创建一个Set并添加一些数据
+	s := NewRWSet[int]()
+	s.Add(1, 2, 3, 4, 5)
+
+	// 使用迭代器遍历
+	iter := s.Iterator()
+	defer iter.Close()
+
+	count := 0
+	values := make(map[int]bool)
+
+	// 第一次调用Next应该移动到第一个元素
+	for iter.HasNext() {
+		value := iter.Value()
+		values[value] = true
+		count++
+	}
+
+	// 验证结果
+	assert.Equal(t, 5, count)
+	assert.True(t, values[1])
+	assert.True(t, values[2])
+	assert.True(t, values[3])
+	assert.True(t, values[4])
+	assert.True(t, values[5])
+}
+
+func TestEmptySetIterator(t *testing.T) {
+	// 测试空Set的迭代器
+	s := NewRWSet[int]()
+	iter := s.Iterator()
+	defer iter.Close()
+
+	// 对于空Set，第一次调用Next就应该返回false
+	assert.False(t, iter.HasNext())
+}
+
+func TestSetIteratorClose(t *testing.T) {
+	// 测试关闭迭代器
+	s := NewRWSet[string]()
+	s.Add("a", "b", "c")
+
+	iter := s.Iterator()
+
+	// 使用一次迭代器
+	assert.True(t, iter.HasNext())
+	value := iter.Value()
+	assert.Equal(t, "a", value)
+
+	// 关闭迭代器
+	err := iter.Close()
+	assert.NoError(t, err)
+
+	// 关闭后再次调用Next应该返回false
+	assert.False(t, iter.HasNext())
+}
+
 func TestRWSet(t *testing.T) {
 	// 创建一个新的RWSet
 	rwSet := NewRWSet[int]()

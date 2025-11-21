@@ -100,6 +100,22 @@ func (rw *RWMap[K, V]) Values() []V {
 	return values
 }
 
+// Iterator 返回map的迭代器
+func (rw *RWMap[K, V]) Iterator() concurrent.Iterator[concurrent.Entry[K, V]] {
+	rw.mutex.RLock()
+	defer rw.mutex.RUnlock()
+
+	entries := make([]concurrent.Entry[K, V], 0, len(rw.m))
+	for k, v := range rw.m {
+		entries = append(entries, concurrent.Entry[K, V]{Key: k, Value: v})
+	}
+
+	return &entryIterator[K, V]{
+		entries: entries,
+		index:   -1, // 初始化为-1，第一次调用Next时会移动到0
+	}
+}
+
 // Map 是一个基于sync.Map的并发安全Map实现
 // 适用于只读、只写或读多写少的场景
 type Map[K comparable, V any] struct {
@@ -181,4 +197,18 @@ func (wm *Map[K, V]) Values() []V {
 		return true
 	})
 	return result
+}
+
+// Iterator 返回map的迭代器
+func (wm *Map[K, V]) Iterator() concurrent.Iterator[concurrent.Entry[K, V]] {
+	entries := make([]concurrent.Entry[K, V], 0, wm.len)
+	wm.m.Range(func(key, value any) bool {
+		entries = append(entries, concurrent.Entry[K, V]{Key: key.(K), Value: value.(V)})
+		return true
+	})
+
+	return &mapIterator[K, V]{
+		entries: entries,
+		index:   -1, // 初始化为-1，第一次调用Next时会移动到0
+	}
 }
