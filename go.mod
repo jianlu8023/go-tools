@@ -7,6 +7,7 @@ require (
 	// chainmaker.org/chainmaker/sdk-go/v2 v2.3.0
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/bytedance/sonic v1.14.1
+	github.com/cespare/xxhash/v2 v2.1.2
 	github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5
 	github.com/gin-gonic/gin v1.10.1
 	github.com/go-resty/resty/v2 v2.13.1
@@ -27,6 +28,7 @@ replace (
 	// chainmaker.org/chainmaker/sdk-go/v2 => chainmaker.org/chainmaker/sdk-go/v2 v2.3.0
 	github.com/araddon/dateparse => github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/bytedance/sonic => github.com/bytedance/sonic v1.14.1
+	github.com/cespare/xxhash/v2 => github.com/cespare/xxhash/v2 v2.3.0
 	github.com/facebookgo/atomicfile => github.com/facebookgo/atomicfile v0.0.0-20151019160806-2de1f203e7d5
 	github.com/gin-gonic/gin => github.com/gin-gonic/gin v1.10.1
 	github.com/json-iterator/go => github.com/json-iterator/go v1.1.12
