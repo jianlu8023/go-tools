@@ -2,13 +2,13 @@ package query
 
 import (
 	"fmt"
-	"github.com/jianlu8023/go-tools/v2/pkg/stringer"
 
-	"github.com/go-resty/resty/v2"
+	"github.com/jianlu8023/go-tools/v2/pkg/http"
+	"github.com/jianlu8023/go-tools/v2/pkg/stringer"
 )
 
 var (
-	clt = resty.New()
+	clt = http.NewClient()
 
 	queryAll  = "https://api.github.com/users/{{owner}}/repos"
 	queryRepo = "https://api.github.com/repos/{{owner}}/{{repo}}"
@@ -19,7 +19,7 @@ var (
 // @param token:
 // @return *resty.Response:
 // @return error:
-func GitHubAllRepository(owner, token string) (*resty.Response, error) {
+func GitHubAllRepository(owner, token string) ([]byte, int, error) {
 	headers := map[string]string{
 		"Accept":               "application/vnd.github+json",
 		"X-GitHub-Api-Version": "2022-11-28",
@@ -31,12 +31,7 @@ func GitHubAllRepository(owner, token string) (*resty.Response, error) {
 	url := stringer.Replace(queryAll, map[string]string{
 		"{{owner}}": owner,
 	})
-	response, err := clt.R().SetHeaders(headers).Get(url)
-
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
+	return clt.SetHeaders(headers).GET(url, map[string]interface{}{})
 }
 
 // GitHubRepository
@@ -45,7 +40,7 @@ func GitHubAllRepository(owner, token string) (*resty.Response, error) {
 // @param token:
 // @return *resty.Response:
 // @return error:
-func GitHubRepository(owner, repo, token string) (*resty.Response, error) {
+func GitHubRepository(owner, repo, token string) ([]byte, int, error) {
 	headers := map[string]string{
 		"Accept":               "application/vnd.github+json",
 		"X-GitHub-Api-Version": "2022-11-28",
@@ -59,9 +54,7 @@ func GitHubRepository(owner, repo, token string) (*resty.Response, error) {
 		"{{owner}}": owner,
 		"{{repo}}":  repo,
 	})
-	response, err := clt.R().SetHeaders(headers).Get(url)
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
+
+	return clt.SetHeaders(headers).GET(url, map[string]interface{}{})
+
 }
