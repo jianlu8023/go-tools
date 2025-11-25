@@ -201,7 +201,7 @@ func (c *Context) ClearPath() {
 	c.Context.ClearPath()
 }
 
-// Save 保存图像到文件(PNG格式)
+// SavePNG 保存图像到文件(PNG格式)
 func (c *Context) SavePNG(filename string) error {
 	return c.Context.SavePNG(filename)
 }

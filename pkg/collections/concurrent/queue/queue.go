@@ -12,17 +12,17 @@ type RWQueue[T any] struct {
 	data  []T
 }
 
-var _ Queue[int] = (*RWQueue[int])(nil)
+var _ concurrent.Queue[int] = (*RWQueue[int])(nil)
 
 // NewRWQueue 创建一个新的RWQueue实例
-func NewRWQueue[T any]() Queue[T] {
+func NewRWQueue[T any]() concurrent.Queue[T] {
 	return &RWQueue[T]{
 		data: make([]T, 0, 8),
 	}
 }
 
 // Enqueue 向队列尾部添加元素
-func (rq *RWQueue[T]) Enqueue(element T) Queue[T] {
+func (rq *RWQueue[T]) Enqueue(element T) concurrent.Queue[T] {
 	rq.mutex.Lock()
 	defer rq.mutex.Unlock()
 	rq.data = append(rq.data, element)
@@ -72,7 +72,7 @@ func (rq *RWQueue[T]) Empty() bool {
 }
 
 // Clear 清空队列
-func (rq *RWQueue[T]) Clear() Queue[T] {
+func (rq *RWQueue[T]) Clear() concurrent.Queue[T] {
 	rq.mutex.Lock()
 	defer rq.mutex.Unlock()
 	rq.data = make([]T, 0)

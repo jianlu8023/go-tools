@@ -91,6 +91,8 @@ replace (
 	github.com/json-iterator/go => github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-colorable => github.com/mattn/go-colorable v0.1.14
 	github.com/mitchellh/go-homedir => github.com/mitchellh/go-homedir v1.1.0
+	github.com/nfnt/resize => github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/schollz/progressbar/v3 => github.com/schollz/progressbar/v3 v3.18.0
 	github.com/shirou/gopsutil/v4 => github.com/shirou/gopsutil/v4 v4.24.10
 	github.com/stretchr/testify v1.10.0 => github.com/stretchr/testify v1.11.1
 	github.com/tjfoc/gmsm => github.com/tjfoc/gmsm v1.4.1

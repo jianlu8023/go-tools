@@ -77,12 +77,12 @@ func ThumbnailWithDefault(maxWidth, maxHeight uint, img image.Image) image.Image
 	return Thumbnail(maxWidth, maxHeight, img, defaultInterpolation)
 }
 
-// ResizeContextWithDefault 使用默认插值函数缩放当前上下文中的图像
+// ResizeWithDefault 使用默认插值函数缩放当前上下文中的图像
 func (c *Context) ResizeWithDefault(width, height uint) *Context {
 	return c.Resize(width, height, defaultInterpolation)
 }
 
-// ThumbnailContextWithDefault 使用默认插值函数生成当前上下文图像的缩略图
+// ThumbnailWithDefault 使用默认插值函数生成当前上下文图像的缩略图
 func (c *Context) ThumbnailWithDefault(maxWidth, maxHeight uint) *Context {
 	return c.Thumbnail(maxWidth, maxHeight, defaultInterpolation)
 }
