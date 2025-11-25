@@ -55,3 +55,21 @@ type Set[T comparable] interface {
 	// Iterator 返回 set 的迭代器
 	Iterator() Iterator[T]
 }
+
+// Queue 定义并发安全的队列接口
+type Queue[T any] interface {
+	// Enqueue 向队列尾部添加元素
+	Enqueue(element T) Queue[T]
+	// Dequeue 从队列头部移除并返回元素
+	Dequeue() (T, bool)
+	// Front 返回队列头部元素但不移除
+	Front() (T, bool)
+	// Len 返回队列长度
+	Len() int
+	// Empty 判断队列是否为空
+	Empty() bool
+	// Clear 清空队列
+	Clear() Queue[T]
+	// Iterator 返回队列的迭代器
+	Iterator() Iterator[T]
+}
