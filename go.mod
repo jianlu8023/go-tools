@@ -19,10 +19,12 @@ require (
 	github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1
 	github.com/google/uuid v1.6.0
 	github.com/json-iterator/go v1.1.12
+	github.com/klauspost/compress v1.18.1
 	github.com/mattn/go-colorable v0.1.13
 	github.com/mattn/go-isatty v0.0.20
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/pierrec/lz4/v4 v4.1.22
 	github.com/schollz/progressbar/v3 v3.18.0
 	github.com/shirou/gopsutil/v4 v4.24.10
 	github.com/stretchr/testify v1.10.0
@@ -89,9 +91,11 @@ replace (
 	github.com/go-resty/resty/v2 v2.13.1 => github.com/go-resty/resty/v2 v2.16.5
 	github.com/gocarina/gocsv => github.com/gocarina/gocsv v0.0.0-20240520201108-78e41c74b4b1
 	github.com/json-iterator/go => github.com/json-iterator/go v1.1.12
+	github.com/klauspost/compress => github.com/klauspost/compress v1.18.0
 	github.com/mattn/go-colorable => github.com/mattn/go-colorable v0.1.14
 	github.com/mitchellh/go-homedir => github.com/mitchellh/go-homedir v1.1.0
 	github.com/nfnt/resize => github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
+	github.com/pierrec/lz4/v4 => github.com/pierrec/lz4/v4 v4.1.22
 	github.com/schollz/progressbar/v3 => github.com/schollz/progressbar/v3 v3.18.0
 	github.com/shirou/gopsutil/v4 => github.com/shirou/gopsutil/v4 v4.24.10
 	github.com/stretchr/testify v1.10.0 => github.com/stretchr/testify v1.11.1
