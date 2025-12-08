@@ -3,8 +3,9 @@ package argon2
 import (
 	"crypto/rand"
 	"fmt"
-	"golang.org/x/crypto/argon2"
 	"io"
+
+	"golang.org/x/crypto/argon2"
 )
 
 const (

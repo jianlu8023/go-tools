@@ -37,20 +37,52 @@ func Int64ToNull(i *int64) sql.NullInt64 {
 	return sql.NullInt64{Int64: *i, Valid: true}
 }
 
-// NullBoolPtr 将 sql.NullBool 转换为 *bool。
-func NullBoolPtr(nb sql.NullBool) *bool {
-	if !nb.Valid {
+// NullInt32Ptr 将 sql.NullInt32 转换为 *int32。
+func NullInt32Ptr(ni sql.NullInt32) *int32 {
+	if !ni.Valid {
 		return nil
 	}
-	return &nb.Bool
+	return &ni.Int32
 }
 
-// BoolToNull 将 *bool 转换为 sql.NullBool。
-func BoolToNull(b *bool) sql.NullBool {
-	if b == nil {
-		return sql.NullBool{Valid: false}
+// Int32ToNull 将 *int32 转换为 sql.NullInt32。
+func Int32ToNull(i *int32) sql.NullInt32 {
+	if i == nil {
+		return sql.NullInt32{Valid: false}
 	}
-	return sql.NullBool{Bool: *b, Valid: true}
+	return sql.NullInt32{Int32: *i, Valid: true}
+}
+
+// NullInt16Ptr 将 sql.NullInt16 转换为 *int16。
+func NullInt16Ptr(ni sql.NullInt16) *int16 {
+	if !ni.Valid {
+		return nil
+	}
+	return &ni.Int16
+}
+
+// Int16ToNull 将 *int16 转换为 sql.NullInt16。
+func Int16ToNull(i *int16) sql.NullInt16 {
+	if i == nil {
+		return sql.NullInt16{Valid: false}
+	}
+	return sql.NullInt16{Int16: *i, Valid: true}
+}
+
+// NullBytePtr 将 sql.NullByte 转换为 *byte。
+func NullBytePtr(ni sql.NullByte) *byte {
+	if !ni.Valid {
+		return nil
+	}
+	return &ni.Byte
+}
+
+// ByteToNull 将 *byte 转换为 sql.NullByte。
+func ByteToNull(i *byte) sql.NullByte {
+	if i == nil {
+		return sql.NullByte{Valid: false}
+	}
+	return sql.NullByte{Byte: *i, Valid: true}
 }
 
 // NullFloat64Ptr 将 sql.NullFloat64 转换为 *float64。
@@ -67,6 +99,22 @@ func Float64ToNull(f *float64) sql.NullFloat64 {
 		return sql.NullFloat64{Valid: false}
 	}
 	return sql.NullFloat64{Float64: *f, Valid: true}
+}
+
+// NullBoolPtr 将 sql.NullBool 转换为 *bool。
+func NullBoolPtr(nb sql.NullBool) *bool {
+	if !nb.Valid {
+		return nil
+	}
+	return &nb.Bool
+}
+
+// BoolToNull 将 *bool 转换为 sql.NullBool。
+func BoolToNull(b *bool) sql.NullBool {
+	if b == nil {
+		return sql.NullBool{Valid: false}
+	}
+	return sql.NullBool{Bool: *b, Valid: true}
 }
 
 // NullTimePtr 将 sql.NullTime 转换为 *time.Time。

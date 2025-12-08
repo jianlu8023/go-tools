@@ -17,7 +17,7 @@ func TestNullStringPtr(t *testing.T) {
 		{
 			name:     "valid string",
 			input:    sql.NullString{String: "hello", Valid: true},
-			expected: stringPtr("hello"),
+			expected: StringPtr("hello"),
 		},
 		{
 			name:     "invalid string",
@@ -27,7 +27,7 @@ func TestNullStringPtr(t *testing.T) {
 		{
 			name:     "empty valid string",
 			input:    sql.NullString{String: "", Valid: true},
-			expected: stringPtr(""),
+			expected: StringPtr(""),
 		},
 	}
 
@@ -47,7 +47,7 @@ func TestStringToNull(t *testing.T) {
 	}{
 		{
 			name:     "non-nil string",
-			input:    stringPtr("hello"),
+			input:    StringPtr("hello"),
 			expected: sql.NullString{String: "hello", Valid: true},
 		},
 		{
@@ -57,7 +57,7 @@ func TestStringToNull(t *testing.T) {
 		},
 		{
 			name:     "empty string",
-			input:    stringPtr(""),
+			input:    StringPtr(""),
 			expected: sql.NullString{String: "", Valid: true},
 		},
 	}
@@ -79,7 +79,7 @@ func TestNullInt64Ptr(t *testing.T) {
 		{
 			name:     "valid int64",
 			input:    sql.NullInt64{Int64: 42, Valid: true},
-			expected: int64Ptr(42),
+			expected: Int64Ptr(42),
 		},
 		{
 			name:     "invalid int64",
@@ -89,7 +89,7 @@ func TestNullInt64Ptr(t *testing.T) {
 		{
 			name:     "zero valid int64",
 			input:    sql.NullInt64{Int64: 0, Valid: true},
-			expected: int64Ptr(0),
+			expected: Int64Ptr(0),
 		},
 	}
 
@@ -109,7 +109,7 @@ func TestInt64ToNull(t *testing.T) {
 	}{
 		{
 			name:     "non-nil int64",
-			input:    int64Ptr(42),
+			input:    Int64Ptr(42),
 			expected: sql.NullInt64{Int64: 42, Valid: true},
 		},
 		{
@@ -119,7 +119,7 @@ func TestInt64ToNull(t *testing.T) {
 		},
 		{
 			name:     "zero int64",
-			input:    int64Ptr(0),
+			input:    Int64Ptr(0),
 			expected: sql.NullInt64{Int64: 0, Valid: true},
 		},
 	}
@@ -141,12 +141,12 @@ func TestNullBoolPtr(t *testing.T) {
 		{
 			name:     "valid true bool",
 			input:    sql.NullBool{Bool: true, Valid: true},
-			expected: boolPtr(true),
+			expected: BoolPtr(true),
 		},
 		{
 			name:     "valid false bool",
 			input:    sql.NullBool{Bool: false, Valid: true},
-			expected: boolPtr(false),
+			expected: BoolPtr(false),
 		},
 		{
 			name:     "invalid bool",
@@ -171,12 +171,12 @@ func TestBoolToNull(t *testing.T) {
 	}{
 		{
 			name:     "non-nil true bool",
-			input:    boolPtr(true),
+			input:    BoolPtr(true),
 			expected: sql.NullBool{Bool: true, Valid: true},
 		},
 		{
 			name:     "non-nil false bool",
-			input:    boolPtr(false),
+			input:    BoolPtr(false),
 			expected: sql.NullBool{Bool: false, Valid: true},
 		},
 		{
@@ -203,7 +203,7 @@ func TestNullFloat64Ptr(t *testing.T) {
 		{
 			name:     "valid float64",
 			input:    sql.NullFloat64{Float64: 3.14, Valid: true},
-			expected: float64Ptr(3.14),
+			expected: Float64Ptr(3.14),
 		},
 		{
 			name:     "invalid float64",
@@ -213,7 +213,7 @@ func TestNullFloat64Ptr(t *testing.T) {
 		{
 			name:     "zero valid float64",
 			input:    sql.NullFloat64{Float64: 0.0, Valid: true},
-			expected: float64Ptr(0.0),
+			expected: Float64Ptr(0.0),
 		},
 	}
 
@@ -233,7 +233,7 @@ func TestFloat64ToNull(t *testing.T) {
 	}{
 		{
 			name:     "non-nil float64",
-			input:    float64Ptr(3.14),
+			input:    Float64Ptr(3.14),
 			expected: sql.NullFloat64{Float64: 3.14, Valid: true},
 		},
 		{
@@ -243,7 +243,7 @@ func TestFloat64ToNull(t *testing.T) {
 		},
 		{
 			name:     "zero float64",
-			input:    float64Ptr(0.0),
+			input:    Float64Ptr(0.0),
 			expected: sql.NullFloat64{Float64: 0.0, Valid: true},
 		},
 	}
@@ -312,21 +312,4 @@ func TestTimeToNull(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-}
-
-// Helper functions to create pointers
-func stringPtr(s string) *string {
-	return &s
-}
-
-func int64Ptr(i int64) *int64 {
-	return &i
-}
-
-func boolPtr(b bool) *bool {
-	return &b
-}
-
-func float64Ptr(f float64) *float64 {
-	return &f
 }

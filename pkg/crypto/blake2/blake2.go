@@ -2,11 +2,12 @@ package blake2
 
 import (
 	"fmt"
-	"golang.org/x/crypto/blake2b"
-	"golang.org/x/crypto/blake2s"
 	"hash"
 	"io"
 	"os"
+
+	"golang.org/x/crypto/blake2b"
+	"golang.org/x/crypto/blake2s"
 )
 
 // HashFunc 哈希函数类型
