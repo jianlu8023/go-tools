@@ -313,3 +313,92 @@ func TestTimeToNull(t *testing.T) {
 		})
 	}
 }
+func TestTrueToNull(t *testing.T) {
+	result := TrueToNull()
+	assert.True(t, result.Valid)
+	assert.True(t, result.Bool)
+}
+
+func TestFalseToNull(t *testing.T) {
+	result := FalseToNull()
+	assert.True(t, result.Valid)
+	assert.False(t, result.Bool)
+}
+
+func TestStringDefaultToNull(t *testing.T) {
+	result := StringDefaultToNull()
+	assert.True(t, result.Valid)
+	assert.Equal(t, "", result.String)
+}
+
+func TestInt64DefaultToNull(t *testing.T) {
+	result := Int64DefaultToNull()
+	assert.True(t, result.Valid)
+	assert.Equal(t, int64(0), result.Int64)
+}
+
+func TestInt32DefaultToNull(t *testing.T) {
+	result := Int32DefaultToNull()
+	assert.True(t, result.Valid)
+	assert.Equal(t, int32(0), result.Int32)
+}
+
+func TestInt16DefaultToNull(t *testing.T) {
+	result := Int16DefaultToNull()
+	assert.True(t, result.Valid)
+	assert.Equal(t, int16(0), result.Int16)
+}
+
+func TestByteDefaultToNull(t *testing.T) {
+	result := ByteDefaultToNull()
+	assert.True(t, result.Valid)
+	assert.Equal(t, byte(0), result.Byte)
+}
+
+func TestFloat64DefaultToNull(t *testing.T) {
+	result := Float64DefaultToNull()
+	assert.True(t, result.Valid)
+	assert.Equal(t, 0.0, result.Float64)
+}
+
+func TestBoolDefaultToNull(t *testing.T) {
+	result := BoolDefaultToNull()
+	assert.True(t, result.Valid)
+	assert.False(t, result.Bool)
+}
+
+func TestTimeDefaultToNull(t *testing.T) {
+	result := TimeDefaultToNull()
+	assert.True(t, result.Valid)
+	assert.Equal(t, time.Time{}, result.Time)
+}
+
+func TestConvenienceMethods(t *testing.T) {
+	// 测试 TrueToNull 和 FalseToNull 与 BoolToNull 的一致性
+	truePtr := TruePtr()
+	falsePtr := FalsePtr()
+
+	trueResult := BoolToNull(truePtr)
+	falseResult := BoolToNull(falsePtr)
+
+	assert.Equal(t, TrueToNull(), trueResult)
+	assert.Equal(t, FalseToNull(), falseResult)
+
+	// 测试 StringDefaultToNull 与 StringToNull 的一致性
+	emptyStrPtr := StringDefaultPtr()
+	emptyStrResult := StringToNull(emptyStrPtr)
+
+	assert.Equal(t, StringDefaultToNull(), emptyStrResult)
+
+	// 测试 Int64DefaultToNull 与 Int64ToNull 的一致性
+	zeroInt64Ptr := Int64DefaultPtr()
+	zeroInt64Result := Int64ToNull(zeroInt64Ptr)
+
+	assert.Equal(t, Int64DefaultToNull(), zeroInt64Result)
+
+	// 测试 BoolDefaultToNull 与 BoolToNull 的一致性
+	falseBoolPtr := BoolDefaultPtr()
+	falseBoolResult := BoolToNull(falseBoolPtr)
+
+	assert.Equal(t, BoolDefaultToNull(), falseBoolResult)
+}

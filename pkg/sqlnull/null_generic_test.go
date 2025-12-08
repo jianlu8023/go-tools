@@ -22,7 +22,7 @@ func TestNullPtr(t *testing.T) {
 		{
 			name:     "valid string",
 			input:    sql.Null[string]{V: "hello", Valid: true},
-			expected: stringPtr("hello"),
+			expected: StringPtr("hello"),
 		},
 		{
 			name:     "invalid string",
@@ -64,12 +64,12 @@ func TestNullPtr(t *testing.T) {
 		{
 			name:     "valid bool true",
 			input:    sql.Null[bool]{V: true, Valid: true},
-			expected: boolPtr(true),
+			expected: TruePtr(),
 		},
 		{
 			name:     "valid bool false",
 			input:    sql.Null[bool]{V: false, Valid: true},
-			expected: boolPtr(false),
+			expected: FalsePtr(),
 		},
 		{
 			name:     "invalid bool",
@@ -97,7 +97,7 @@ func TestToNull(t *testing.T) {
 	stringTests := []testCase[string]{
 		{
 			name:     "non-nil string",
-			input:    stringPtr("hello"),
+			input:    StringPtr("hello"),
 			expected: sql.Null[string]{V: "hello", Valid: true},
 		},
 		{
@@ -139,12 +139,12 @@ func TestToNull(t *testing.T) {
 	boolTests := []testCase[bool]{
 		{
 			name:     "non-nil bool true",
-			input:    boolPtr(true),
+			input:    TruePtr(),
 			expected: sql.Null[bool]{V: true, Valid: true},
 		},
 		{
 			name:     "non-nil bool false",
-			input:    boolPtr(false),
+			input:    FalsePtr(),
 			expected: sql.Null[bool]{V: false, Valid: true},
 		},
 		{
