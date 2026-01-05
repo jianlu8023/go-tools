@@ -6,65 +6,113 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math"
+	"regexp"
+	"strconv"
+	"strings"
 	"unsafe"
 )
 
 const (
+	// Byte 1 byte
 	Byte = 1
 
-	KiloByte = Byte * 1000
-	MegaByte = KiloByte * 1000
-	GigaByte = MegaByte * 1000
-	TeraByte = GigaByte * 1000
+	// Decimal
 
-	KibiByte = Byte * 1024
-	MebiByte = KibiByte * 1024
-	GibiByte = MebiByte * 1024
+	KB = Byte * 1000
+	MB = KB * 1000
+	GB = MB * 1000
+	TB = GB * 1000
+	PB = TB * 1000
+
+	// Binary
+
+	KiB = Byte * 1024
+	MiB = KiB * 1024
+	GiB = MiB * 1024
+	TiB = GiB * 1024
+	PiB = TiB * 1024
+)
+
+type unitMap map[string]int64
+
+var (
+	decimalMap = unitMap{
+		"k": KB,
+		"m": MB,
+		"g": GB,
+		"t": TB,
+		"p": PB,
+	}
+
+	binaryMap = unitMap{
+		"k": KiB,
+		"m": MiB,
+		"g": GiB,
+		"t": TiB,
+		"p": PiB,
+	}
+
+	sizeRegex = regexp.MustCompile(`^(\d+(\.\d+)*) ?([kKmMgGtTpP])?[iI]?[bB]?$`)
+
+	decimalAbbrs = []string{"B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"}
+
+	binaryAbbrs = []string{"B", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"}
 )
 
 func HumanDecimal(b int64) string {
-	var value float64
-	var unit string
+	// var value float64
+	// var unit string
+	//
+	// switch {
+	// case b >= TB:
+	// 	value = float64(b) / TB
+	// 	unit = "TB"
+	// case b >= GB:
+	// 	value = float64(b) / GB
+	// 	unit = "GB"
+	// case b >= MB:
+	// 	value = float64(b) / MB
+	// 	unit = "MB"
+	// case b >= KB:
+	// 	value = float64(b) / KB
+	// 	unit = "KB"
+	// default:
+	// 	return fmt.Sprintf("%d B", b)
+	// }
+	//
+	// switch {
+	// case value >= 10:
+	// 	return fmt.Sprintf("%d %s", int(value), unit)
+	// case value != math.Trunc(value):
+	// 	return fmt.Sprintf("%.1f %s", value, unit)
+	// default:
+	// 	return fmt.Sprintf("%d %s", int(value), unit)
+	// }
 
-	switch {
-	case b >= TeraByte:
-		value = float64(b) / TeraByte
-		unit = "TB"
-	case b >= GigaByte:
-		value = float64(b) / GigaByte
-		unit = "GB"
-	case b >= MegaByte:
-		value = float64(b) / MegaByte
-		unit = "MB"
-	case b >= KiloByte:
-		value = float64(b) / KiloByte
-		unit = "KB"
-	default:
-		return fmt.Sprintf("%d B", b)
-	}
+	return humanSizeWithPrecision(float64(b), 4)
+}
 
-	switch {
-	case value >= 10:
-		return fmt.Sprintf("%d %s", int(value), unit)
-	case value != math.Trunc(value):
-		return fmt.Sprintf("%.1f %s", value, unit)
-	default:
-		return fmt.Sprintf("%d %s", int(value), unit)
-	}
+func FromHumanDecimal(str string) (int64, error) {
+	return parseSize(str, decimalMap)
 }
 
 func HumanBinary(b uint64) string {
-	switch {
-	case b >= GibiByte:
-		return fmt.Sprintf("%.1f GiB", float64(b)/GibiByte)
-	case b >= MebiByte:
-		return fmt.Sprintf("%.1f MiB", float64(b)/MebiByte)
-	case b >= KibiByte:
-		return fmt.Sprintf("%.1f KiB", float64(b)/KibiByte)
-	default:
-		return fmt.Sprintf("%d B", b)
-	}
+	// switch {
+	// case b >= GiB:
+	// 	return fmt.Sprintf("%.1f GiB", float64(b)/GiB)
+	// case b >= MiB:
+	// 	return fmt.Sprintf("%.1f MiB", float64(b)/MiB)
+	// case b >= KiB:
+	// 	return fmt.Sprintf("%.1f KiB", float64(b)/KiB)
+	// default:
+	// 	return fmt.Sprintf("%d B", b)
+	// }
+
+	return customSize("%.4g%s", float64(b), 1024.0, binaryAbbrs)
+}
+
+func FromHumanBinary(str string) (int64, error) {
+	return parseSize(str, binaryMap)
 }
 
 // BytesToInt le bytehelper to int32, little endian
@@ -330,4 +378,43 @@ func HexEncode(b []byte) string {
 // HexDecode converts a hexadecimal string to a byte slice.
 func HexDecode(s string) ([]byte, error) {
 	return hex.DecodeString(s)
+}
+
+func getSizeAndUnit(size float64, base float64, _map []string) (float64, string) {
+	i := 0
+	unitsLimit := len(_map) - 1
+	for size >= base && i < unitsLimit {
+		size = size / base
+		i++
+	}
+	return size, _map[i]
+}
+
+func humanSizeWithPrecision(size float64, precision int) string {
+	size, unit := getSizeAndUnit(size, 1000.0, decimalAbbrs)
+	return fmt.Sprintf("%.*g%s", precision, size, unit)
+}
+
+func customSize(format string, size float64, base float64, _map []string) string {
+	size, unit := getSizeAndUnit(size, base, _map)
+	return fmt.Sprintf(format, size, unit)
+}
+
+func parseSize(sizeStr string, uMap unitMap) (int64, error) {
+	matches := sizeRegex.FindStringSubmatch(sizeStr)
+	if len(matches) != 4 {
+		return -1, fmt.Errorf("invalid size: '%s'", sizeStr)
+	}
+
+	size, err := strconv.ParseFloat(matches[1], 64)
+	if err != nil {
+		return -1, err
+	}
+
+	unitPrefix := strings.ToLower(matches[3])
+	if mul, ok := uMap[unitPrefix]; ok {
+		size *= float64(mul)
+	}
+
+	return int64(size), nil
 }
