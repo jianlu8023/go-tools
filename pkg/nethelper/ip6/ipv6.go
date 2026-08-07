@@ -29,7 +29,18 @@ func GetIPv6Addr() string {
 					continue
 				}
 				if netutil.ContainsIPv4(iface, udpIP) && len(addrs) > 1 {
-					return addrs[1].(*net.IPNet).IP.String()
+					// 遍历所有地址，安全地找到第一个非 IPv4 的 IPNet 地址（通常是 IPv6）
+					// 不再硬编码索引 [1]，不再做未检查的类型断言
+					for _, addr := range addrs {
+						ipNet, ok := addr.(*net.IPNet)
+						if !ok {
+							continue
+						}
+						// 跳过 IPv4 地址，返回找到的第一个 IPv6 地址
+						if ipNet.IP.To4() == nil {
+							return ipNet.IP.String()
+						}
+					}
 				}
 			}
 		}
