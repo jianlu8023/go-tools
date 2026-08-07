@@ -79,9 +79,13 @@ func HTMLDiff(seq1, seq2 []string) string {
 // SplitLines 将文本按行分割
 // text: 要分割的文本
 // 返回分割后的字符串切片
+// 兼容 Windows(\r\n)、Unix(\n) 和旧版 Mac(\r) 风格的换行符
 func SplitLines(text string) []string {
-	lines := strings.Split(text, "\n")
-	// 如果最后一行为空，则移除它
+	// 统一换行符：先将 \r\n 转为 \n，再处理孤立的 \r
+	normalized := strings.ReplaceAll(text, "\r\n", "\n")
+	normalized = strings.ReplaceAll(normalized, "\r", "\n")
+	lines := strings.Split(normalized, "\n")
+	// 如果最后一行为空，则移除它（对应文本末尾的换行）
 	if len(lines) > 0 && lines[len(lines)-1] == "" {
 		lines = lines[:len(lines)-1]
 	}
