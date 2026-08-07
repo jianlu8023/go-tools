@@ -15,7 +15,7 @@ func (it *entryIterator[K, V]) HasNext() bool {
 
 // Value 返回当前元素的值
 func (it *entryIterator[K, V]) Value() concurrent.Entry[K, V] {
-	if it.closed || it.index >= len(it.entries) {
+	if it.closed || it.index < 0 || it.index >= len(it.entries) {
 		var empty concurrent.Entry[K, V]
 		return empty
 	}
@@ -40,7 +40,7 @@ func (it *mapIterator[K, V]) HasNext() bool {
 
 // Value 返回当前元素的值
 func (it *mapIterator[K, V]) Value() concurrent.Entry[K, V] {
-	if it.closed || it.index >= len(it.entries) {
+	if it.closed || it.index < 0 || it.index >= len(it.entries) {
 		var empty concurrent.Entry[K, V]
 		return empty
 	}

@@ -97,6 +97,7 @@ func (rw *RWSet[T]) One() T {
 	var elem T
 	for k := range rw.m {
 		elem = k
+		break
 	}
 	return elem
 }
@@ -110,39 +111,52 @@ func (rw *RWSet[T]) Clear() concurrent.Set[T] {
 }
 
 // Union 和其他set做并集
+// 注意：为避免在持有自身写锁的同时回调 other 的方法（可能反向获取 other 的锁）造成死锁，
+// 这里先通过 other.Members() 在无锁状态下拷贝一份快照，再在自身锁内完成合并。
 func (rw *RWSet[T]) Union(other concurrent.Set[T]) concurrent.Set[T] {
+	others := other.Members()
 	rw.mutex.Lock()
 	defer rw.mutex.Unlock()
-	other.Loop(func(elem T) {
+	for _, elem := range others {
 		rw.m[elem] = struct{}{}
-	})
+	}
 	return rw
 }
 
 // Diff 和其他set做差集
+// 同 Union，先拷贝 other 快照，再在自身锁内完成删除，避免死锁。
 func (rw *RWSet[T]) Diff(other concurrent.Set[T]) concurrent.Set[T] {
+	others := other.Members()
 	rw.mutex.Lock()
 	defer rw.mutex.Unlock()
-	other.Loop(func(k1 T) {
-		delete(rw.m, k1)
-	})
+	for _, elem := range others {
+		delete(rw.m, elem)
+	}
 	return rw
 }
 
 // Intersection 和其他set做交集
+// 同 Union，先拷贝 other 快照，再在自身锁内完成判断，避免死锁。
 func (rw *RWSet[T]) Intersection(other concurrent.Set[T]) concurrent.Set[T] {
+	others := other.Members()
+	otherSet := make(map[T]struct{}, len(others))
+	for _, elem := range others {
+		otherSet[elem] = struct{}{}
+	}
 	rw.mutex.Lock()
 	defer rw.mutex.Unlock()
-	rw.Loop(func(k T) {
-		if !other.Has(k) {
+	for k := range rw.m {
+		if _, ok := otherSet[k]; !ok {
 			delete(rw.m, k)
 		}
-	})
+	}
 	return rw
 }
 
 // Loop 遍历set中的每个元素
 func (rw *RWSet[T]) Loop(fn func(element T)) {
+	rw.mutex.RLock()
+	defer rw.mutex.RUnlock()
 	for elem := range rw.m {
 		fn(elem)
 	}

@@ -75,9 +75,12 @@ func (s set[T]) One() T {
 	return element
 }
 
-// Clear 将 set 清空
+// Clear 将 set 清空（原地清空，返回接收者自身以支持链式调用）
 func (s set[T]) Clear() set[T] {
-	return make(set[T])
+	for k := range s {
+		delete(s, k)
+	}
+	return s
 }
 
 // Union 和其他 set 做并集

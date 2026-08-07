@@ -2,6 +2,7 @@ package _map
 
 import (
 	"sync"
+	"sync/atomic"
 
 	"github.com/jianlu8023/go-tools/v2/pkg/collections/concurrent"
 )
@@ -120,7 +121,7 @@ func (rw *RWMap[K, V]) Iterator() concurrent.Iterator[concurrent.Entry[K, V]] {
 // 适用于只读、只写或读多写少的场景
 type Map[K comparable, V any] struct {
 	m   sync.Map
-	len int
+	len atomic.Int64
 }
 
 var _ concurrent.Map[int, int] = (*Map[int, int])(nil)
@@ -128,49 +129,53 @@ var _ concurrent.Map[int, int] = (*Map[int, int])(nil)
 // NewMap 创建一个新的Map实例
 func NewMap[K comparable, V any]() *Map[K, V] {
 	return &Map[K, V]{
-		m:   sync.Map{},
-		len: 0,
+		m: sync.Map{},
 	}
 }
 
-// Put 向map中添加键值对
+// Put 向map中添加或更新键值对
 func (wm *Map[K, V]) Put(key K, val V) {
-	_, loaded := wm.m.LoadOrStore(key, val)
+	_, loaded := wm.m.Swap(key, val)
 	if !loaded {
-		wm.len++
+		wm.len.Add(1)
 	}
 }
 
 // Get 从map中获取指定键的值
 func (wm *Map[K, V]) Get(key K) (V, bool) {
 	result, ok := wm.m.Load(key)
-	return result.(V), ok
+	if !ok {
+		var zero V
+		return zero, false
+	}
+	return result.(V), true
 }
 
 // Del 从map中删除指定键
 func (wm *Map[K, V]) Del(key K) {
-	// 先检查键是否存在再删除
-	_, ok := wm.m.Load(key)
-	if ok {
-		wm.m.Delete(key)
-		wm.len--
+	_, loaded := wm.m.LoadAndDelete(key)
+	if loaded {
+		wm.len.Add(-1)
 	}
 }
 
 // Len 返回map的长度
 func (wm *Map[K, V]) Len() int {
-	return wm.len
+	return int(wm.len.Load())
 }
 
 // Clear 清空map
 func (wm *Map[K, V]) Clear() {
-	wm.m = sync.Map{}
-	wm.len = 0
+	wm.m.Range(func(key, value any) bool {
+		wm.m.Delete(key)
+		return true
+	})
+	wm.len.Store(0)
 }
 
 // Empty 判断map是否为空
 func (wm *Map[K, V]) Empty() bool {
-	return wm.len == 0
+	return wm.len.Load() == 0
 }
 
 // HasKey 判断map中是否包含指定键
@@ -181,7 +186,7 @@ func (wm *Map[K, V]) HasKey(key K) bool {
 
 // Keys 返回map中所有的键
 func (wm *Map[K, V]) Keys() []K {
-	result := make([]K, 0, wm.len)
+	result := make([]K, 0, int(wm.len.Load()))
 	wm.m.Range(func(key, value any) bool {
 		result = append(result, key.(K))
 		return true
@@ -191,7 +196,7 @@ func (wm *Map[K, V]) Keys() []K {
 
 // Values 返回map中所有的值
 func (wm *Map[K, V]) Values() []V {
-	result := make([]V, 0, wm.len)
+	result := make([]V, 0, int(wm.len.Load()))
 	wm.m.Range(func(key, value any) bool {
 		result = append(result, value.(V))
 		return true
@@ -201,7 +206,7 @@ func (wm *Map[K, V]) Values() []V {
 
 // Iterator 返回map的迭代器
 func (wm *Map[K, V]) Iterator() concurrent.Iterator[concurrent.Entry[K, V]] {
-	entries := make([]concurrent.Entry[K, V], 0, wm.len)
+	entries := make([]concurrent.Entry[K, V], 0, int(wm.len.Load()))
 	wm.m.Range(func(key, value any) bool {
 		entries = append(entries, concurrent.Entry[K, V]{Key: key.(K), Value: value.(V)})
 		return true

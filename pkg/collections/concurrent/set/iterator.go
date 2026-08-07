@@ -18,7 +18,7 @@ func (it *setIterator[T]) HasNext() bool {
 
 // Value 返回当前元素的值
 func (it *setIterator[T]) Value() T {
-	if it.closed || it.index >= len(it.elements) {
+	if it.closed || it.index < 0 || it.index >= len(it.elements) {
 		var empty T
 		return empty
 	}

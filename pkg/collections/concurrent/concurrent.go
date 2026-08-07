@@ -40,7 +40,7 @@ type Set[T comparable] interface {
 	Members() []T
 	// Pop 随机返回一个 删除该元素
 	Pop() T
-	// One 随机返回一个 删除该元素
+	// One 随机返回一个元素 不删除
 	One() T
 	// Clear 将 set 清空
 	Clear() Set[T]
