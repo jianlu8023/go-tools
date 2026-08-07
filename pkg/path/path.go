@@ -32,9 +32,11 @@ func WriteToFile(path string, content string, force bool) error {
 
 	// 确保目录存在
 	dir := filepath.Dir(path)
-	if _, err := CreateDir(dir); err != nil {
-		// 如果目录已存在则忽略错误
-		if !strings.Contains(err.Error(), "该目录已经存在") {
+	_, err = CreateDir(dir)
+	if err != nil {
+		// 只有当目录不存在且创建失败时才返回错误
+		// 先判断目录本身是否已存在，避免依赖 CreateDir 的错误文案
+		if dirInfo, statErr := os.Stat(dir); statErr != nil || !dirInfo.IsDir() {
 			return err
 		}
 	}
@@ -435,7 +437,13 @@ func FileCopyFromDirToDir(srcDir string, dstDir string) error {
 			if err != nil {
 				return err
 			}
-			err = os.WriteFile(destPath, data, file.Type())
+			// 使用 file.Mode().Perm() 获取文件实际权限位
+			// file.Type() 返回的是文件类型位（普通文件为0），不能作为权限参数
+			info, err := file.Info()
+			if err != nil {
+				return err
+			}
+			err = os.WriteFile(destPath, data, info.Mode().Perm())
 			if err != nil {
 				return err
 			}
@@ -625,6 +633,10 @@ func ReadFileToLinesBySize(filename string) ([]string, error) {
 		scanner := bufio.NewScanner(file)
 		for scanner.Scan() {
 			lines = append(lines, scanner.Text())
+		}
+		// 检查扫描过程中是否发生错误（如单行超过 64KB token 限制）
+		if err := scanner.Err(); err != nil {
+			return nil, err
 		}
 	}
 
