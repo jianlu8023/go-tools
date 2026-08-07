@@ -3,6 +3,7 @@ package time
 import (
 	"fmt"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -83,14 +84,22 @@ func ParseDuration(d string) (time.Duration, error) {
 	if err == nil {
 		return dr, nil
 	}
-	if strings.Contains(d, "d") {
-		index := strings.Index(d, "d")
-
-		hour, _ := strconv.Atoi(d[:index])
-		dr = time.Hour * 24 * time.Duration(hour)
-		ndr, err := time.ParseDuration(d[index+1:])
+	// 仅在 "d" 紧跟在数字后面且处于单位位置时才视为天数单位
+	// 使用正则匹配 "<number>d<rest>" 形式，避免 "abcd" 这类误匹配
+	dayPattern := regexp.MustCompile(`^([+-]?\d+)d(.*)$`)
+	if matches := dayPattern.FindStringSubmatch(d); matches != nil {
+		hour, err := strconv.Atoi(matches[1])
 		if err != nil {
+			return 0, fmt.Errorf("invalid day count in duration %q: %w", d, err)
+		}
+		dr = time.Hour * 24 * time.Duration(hour)
+		rest := matches[2]
+		if rest == "" {
 			return dr, nil
+		}
+		ndr, err := time.ParseDuration(rest)
+		if err != nil {
+			return 0, fmt.Errorf("invalid duration suffix in %q: %w", d, err)
 		}
 		return dr + ndr, nil
 	}
@@ -206,11 +215,20 @@ func IsSameDay(t1, t2 time.Time) bool {
 	return t1Year == t2Year && t1Month == t2Month && t1Day == t2Day
 }
 
+// beijingLocation 缓存北京时区，避免每次调用 GetBeijingTime 都重新加载
+// 若 LoadLocation 失败（如系统缺少 tzdata），回退到固定 UTC+8 偏移
+var beijingLocation = func() *time.Location {
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		return time.FixedZone("CST", 8*60*60)
+	}
+	return loc
+}()
+
 // GetBeijingTime 获取当前北京时间(UTC+8)
 // @return time.Time: 当前北京时间
 func GetBeijingTime() time.Time {
-	location, _ := time.LoadLocation("Asia/Shanghai")
-	return time.Now().In(location)
+	return time.Now().In(beijingLocation)
 }
 
 // ConvertTimezone 将时间从一个时区转换到另一个时区
