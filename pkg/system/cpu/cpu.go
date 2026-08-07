@@ -1,9 +1,9 @@
 package cpu
 
 import (
+	"github.com/jianlu8023/go-tools/v2/pkg/json/jsoniter"
 	"time"
 
-	"github.com/jianlu8023/go-tools/v2/pkg/json"
 	"github.com/shirou/gopsutil/v4/cpu"
 )
 
@@ -13,7 +13,7 @@ type Cpu struct {
 }
 
 func (s Cpu) String() string {
-	str, _ := json.MarshalString(s)
+	str, _ := jsoniter.MarshalString(s)
 	return str
 }
 

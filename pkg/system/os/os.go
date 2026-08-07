@@ -1,9 +1,8 @@
 package os
 
 import (
+	"github.com/jianlu8023/go-tools/v2/pkg/json/jsoniter"
 	"runtime"
-
-	"github.com/jianlu8023/go-tools/v2/pkg/json"
 )
 
 type Os struct {
@@ -15,7 +14,7 @@ type Os struct {
 }
 
 func (o Os) String() string {
-	marshalString, _ := json.MarshalString(o)
+	marshalString, _ := jsoniter.MarshalString(o)
 	return marshalString
 }
 

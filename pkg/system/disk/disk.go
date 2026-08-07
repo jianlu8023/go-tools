@@ -2,7 +2,7 @@ package disk
 
 import (
 	"github.com/jianlu8023/go-tools/v2/pkg/bytes"
-	"github.com/jianlu8023/go-tools/v2/pkg/json"
+	"github.com/jianlu8023/go-tools/v2/pkg/json/jsoniter"
 	"github.com/shirou/gopsutil/v4/disk"
 )
 
@@ -19,7 +19,7 @@ type Disk struct {
 }
 
 func (s Disk) String() string {
-	str, _ := json.MarshalString(s)
+	str, _ := jsoniter.MarshalString(s)
 	return str
 }
 
@@ -40,7 +40,10 @@ func Disks(allPartition bool) (d []Disk, err error) {
 	for _, partition := range partitions {
 		usage, err := disk.Usage(partition.Mountpoint)
 		if err != nil {
-			return d, err
+			// return d, err
+			d = append(d, Disk{
+				MountPoint: partition.Mountpoint,
+			})
 		} else {
 			d = append(d, Disk{
 				MountPoint:        partition.Mountpoint,

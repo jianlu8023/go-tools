@@ -1,7 +1,7 @@
 package all
 
 import (
-	"github.com/jianlu8023/go-tools/v2/pkg/json"
+	"github.com/jianlu8023/go-tools/v2/pkg/json/jsoniter"
 	"github.com/jianlu8023/go-tools/v2/pkg/system/cpu"
 	"github.com/jianlu8023/go-tools/v2/pkg/system/disk"
 	"github.com/jianlu8023/go-tools/v2/pkg/system/os"
@@ -16,7 +16,7 @@ type SystemInfo struct {
 }
 
 func (s SystemInfo) String() string {
-	marshalString, _ := json.MarshalString(s)
+	marshalString, _ := jsoniter.MarshalString(s)
 	return marshalString
 }
 

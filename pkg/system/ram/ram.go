@@ -2,7 +2,7 @@ package ram
 
 import (
 	"github.com/jianlu8023/go-tools/v2/pkg/bytes"
-	"github.com/jianlu8023/go-tools/v2/pkg/json"
+	"github.com/jianlu8023/go-tools/v2/pkg/json/jsoniter"
 	"github.com/shirou/gopsutil/v4/mem"
 )
 
@@ -15,7 +15,7 @@ type Ram struct {
 }
 
 func (s Ram) String() string {
-	str, _ := json.MarshalString(s)
+	str, _ := jsoniter.MarshalString(s)
 	return str
 }
 
