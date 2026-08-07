@@ -65,13 +65,17 @@ func DecompressWithLimit(data []byte, maxSize int64) ([]byte, error) {
 }
 
 // CompressFile 压缩文件
-func CompressFile(srcPath, destPath string) error {
+func CompressFile(srcPath, destPath string) (err error) {
 	// 打开源文件
 	srcFile, err := os.Open(srcPath)
 	if err != nil {
 		return err
 	}
-	defer srcFile.Close()
+	defer func() {
+		if closeErr := srcFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 确保目标目录存在
 	destDir := filepath.Dir(destPath)
@@ -84,18 +88,30 @@ func CompressFile(srcPath, destPath string) error {
 	if err != nil {
 		return err
 	}
-	defer destFile.Close()
-
-	// 创建zstd写入器
+	// zstd.Writer.Close 负责刷出缓冲数据并写入尾部帧，必须显式关闭并检查错误；
+	// 为确保 Close 错误能正确返回，先 Close writer 再 Close 文件。
 	w, err := zstd.NewWriter(destFile)
 	if err != nil {
+		_ = destFile.Close()
 		return err
 	}
-	defer w.Close()
 
 	// 复制数据进行压缩
 	if _, err := io.Copy(w, srcFile); err != nil {
+		_ = w.Close()
+		_ = destFile.Close()
 		return err
+	}
+
+	// 关闭 zstd writer 刷出尾部帧
+	if err := w.Close(); err != nil {
+		_ = destFile.Close()
+		return err
+	}
+
+	// 关闭目标文件
+	if closeErr := destFile.Close(); closeErr != nil {
+		return closeErr
 	}
 
 	return nil

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/pierrec/lz4/v4"
 )
@@ -67,34 +68,43 @@ func Decompress(data []byte, maxDecompressedSize int64) ([]byte, error) {
 // @param sourceFile 源文件路径
 // @param targetFile 目标压缩文件路径
 // @return error 错误信息
-func CompressFile(sourceFile, targetFile string) error {
+func CompressFile(sourceFile, targetFile string) (err error) {
 	// 打开源文件
 	src, err := os.Open(sourceFile)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer src.Close()
+	defer func() {
+		if closeErr := src.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建目标文件
 	dst, err := os.Create(targetFile)
 	if err != nil {
 		return fmt.Errorf("failed to create target file: %w", err)
 	}
-	defer dst.Close()
 
 	// 创建lz4写入器
 	writer := lz4.NewWriter(dst)
-	defer writer.Close()
 
 	// 复制文件内容
-	_, err = io.Copy(writer, src)
-	if err != nil {
+	if _, err = io.Copy(writer, src); err != nil {
+		_ = writer.Close()
+		_ = dst.Close()
 		return fmt.Errorf("failed to compress file: %w", err)
 	}
 
-	// 确保所有数据都被写入
+	// 关闭 lz4 writer 刷出尾部（仅 Close 一次，避免 P002 重复 Close 问题）
 	if err := writer.Close(); err != nil {
+		_ = dst.Close()
 		return fmt.Errorf("failed to flush compressed data: %w", err)
+	}
+
+	// 关闭目标文件
+	if closeErr := dst.Close(); closeErr != nil {
+		return fmt.Errorf("failed to close target file: %w", closeErr)
 	}
 
 	return nil
@@ -105,35 +115,48 @@ func CompressFile(sourceFile, targetFile string) error {
 // @param targetFile 目标文件路径
 // @param maxDecompressedSize 最大解压大小（防止解压炸弹），0表示不限制
 // @return error 错误信息
-func DecompressFile(sourceFile, targetFile string, maxDecompressedSize int64) error {
+func DecompressFile(sourceFile, targetFile string, maxDecompressedSize int64) (err error) {
 	// 打开源压缩文件
 	src, err := os.Open(sourceFile)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer src.Close()
+	defer func() {
+		if closeErr := src.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建目标文件
 	dst, err := os.Create(targetFile)
 	if err != nil {
 		return fmt.Errorf("failed to create target file: %w", err)
 	}
-	defer dst.Close()
+	defer func() {
+		if closeErr := dst.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建lz4读取器
 	reader := lz4.NewReader(src)
 
 	// 复制解压后的内容
 	if maxDecompressedSize > 0 {
-		// 设置读取限制
-		limitedReader := &io.LimitedReader{R: reader, N: maxDecompressedSize}
-		_, err = io.Copy(dst, limitedReader)
+		// 使用 LimitReader 读取 maxDecompressedSize+1 字节以检测是否超限
+		limitedReader := io.LimitReader(reader, maxDecompressedSize+1)
+		bytesRead, copyErr := io.Copy(dst, limitedReader)
+		if copyErr != nil {
+			return fmt.Errorf("failed to decompress file: %w", copyErr)
+		}
+		// 读取字节数超过限制说明数据不完整（被静默截断），需返回错误而非误报成功
+		if bytesRead > maxDecompressedSize {
+			return fmt.Errorf("decompressed data size exceeds maximum allowed size of %d bytes", maxDecompressedSize)
+		}
 	} else {
-		_, err = io.Copy(dst, reader)
-	}
-
-	if err != nil {
-		return fmt.Errorf("failed to decompress file: %w", err)
+		if _, err := io.Copy(dst, reader); err != nil {
+			return fmt.Errorf("failed to decompress file: %w", err)
+		}
 	}
 
 	return nil
@@ -143,24 +166,26 @@ func DecompressFile(sourceFile, targetFile string, maxDecompressedSize int64) er
 // @param dirPath 源目录路径
 // @param targetTarlz4Path 目标tar.lz4文件路径
 // @return error 错误信息
-func CompressDirToTarlz4(dirPath, targetTarlz4Path string) error {
+func CompressDirToTarlz4(dirPath, targetTarlz4Path string) (err error) {
 	// 创建目标文件
 	tarFile, err := os.Create(targetTarlz4Path)
 	if err != nil {
 		return fmt.Errorf("failed to create target file: %w", err)
 	}
-	defer tarFile.Close()
+	defer func() {
+		if closeErr := tarFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建lz4写入器
 	lz4Writer := lz4.NewWriter(tarFile)
-	defer lz4Writer.Close()
 
 	// 创建tar写入器
 	tarWriter := tar.NewWriter(lz4Writer)
-	defer tarWriter.Close()
 
 	// 遍历目录并添加文件
-	err = filepath.Walk(dirPath, func(filePath string, info os.FileInfo, err error) error {
+	walkErr := filepath.Walk(dirPath, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -196,24 +221,29 @@ func CompressDirToTarlz4(dirPath, targetTarlz4Path string) error {
 		if err != nil {
 			return err
 		}
-		defer file.Close()
 
-		// 复制文件内容到tar
-		_, err = io.Copy(tarWriter, file)
-		return err
+		// 显式关闭文件，避免在 Walk 回调中 defer 累积导致大量句柄同时打开（N-A09）
+		_, copyErr := io.Copy(tarWriter, file)
+		closeErr := file.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+		return closeErr
 	})
 
-	if err != nil {
-		return fmt.Errorf("failed to walk directory: %w", err)
-	}
+	// 无论 Walk 是否成功，都需要按顺序关闭 tarWriter 和 lz4Writer 以刷出缓冲数据
+	// 关闭顺序：先 tarWriter（依赖 lz4Writer），再 lz4Writer（依赖 tarFile）
+	closeTarErr := tarWriter.Close()
+	closeLz4Err := lz4Writer.Close()
 
-	// 确保所有数据都被写入
-	if err := tarWriter.Close(); err != nil {
-		return fmt.Errorf("failed to close tar writer: %w", err)
+	if walkErr != nil {
+		return fmt.Errorf("failed to walk directory: %w", walkErr)
 	}
-
-	if err := lz4Writer.Close(); err != nil {
-		return fmt.Errorf("failed to close lz4 writer: %w", err)
+	if closeTarErr != nil {
+		return fmt.Errorf("failed to close tar writer: %w", closeTarErr)
+	}
+	if closeLz4Err != nil {
+		return fmt.Errorf("failed to close lz4 writer: %w", closeLz4Err)
 	}
 
 	return nil
@@ -223,13 +253,23 @@ func CompressDirToTarlz4(dirPath, targetTarlz4Path string) error {
 // @param sourceTarlz4Path 源tar.lz4文件路径
 // @param dirPath 目标目录路径
 // @return error 错误信息
-func UnCompressTarlz4ToDir(sourceTarlz4Path, dirPath string) error {
+func UnCompressTarlz4ToDir(sourceTarlz4Path, dirPath string) (err error) {
+	// 规范化目标目录路径，确保后续路径遍历检查可靠
+	absDirPath, err := filepath.Abs(filepath.Clean(dirPath))
+	if err != nil {
+		return fmt.Errorf("failed to get absolute directory: %w", err)
+	}
+
 	// 打开源压缩文件
 	sourceFile, err := os.Open(sourceTarlz4Path)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer sourceFile.Close()
+	defer func() {
+		if closeErr := sourceFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建lz4读取器
 	lz4Reader := lz4.NewReader(sourceFile)
@@ -248,7 +288,12 @@ func UnCompressTarlz4ToDir(sourceTarlz4Path, dirPath string) error {
 		}
 
 		// 构建目标路径
-		targetPath := filepath.Join(dirPath, header.Name)
+		targetPath := filepath.Join(absDirPath, header.Name)
+
+		// 路径遍历检查：防止恶意归档通过 ../ 等写入目标目录之外的路径（N-A02）
+		if !isWithinDir(absDirPath, targetPath) {
+			return fmt.Errorf("path traversal detected, refuse to extract: %s", header.Name)
+		}
 
 		// 根据条目类型执行不同操作
 		switch header.Typeflag {
@@ -269,14 +314,28 @@ func UnCompressTarlz4ToDir(sourceTarlz4Path, dirPath string) error {
 				return fmt.Errorf("failed to create file: %w", err)
 			}
 
-			// 复制文件内容
-			_, err = io.Copy(file, tarReader)
-			file.Close()
-			if err != nil {
-				return fmt.Errorf("failed to write file content: %w", err)
+			// 显式关闭文件，避免在 for 循环中 defer 累积导致大量句柄同时打开
+			_, copyErr := io.Copy(file, tarReader)
+			closeErr := file.Close()
+			if copyErr != nil {
+				return fmt.Errorf("failed to write file content: %w", copyErr)
+			}
+			if closeErr != nil {
+				return fmt.Errorf("failed to close file %s: %w", targetPath, closeErr)
 			}
 		}
 	}
 
 	return nil
+}
+
+// isWithinDir 判断 targetPath 是否位于 baseDir 之内（含 baseDir 自身）
+// 通过比较清理后的相对路径，防止 `..`、绝对路径、UNC 路径等跳出 baseDir
+func isWithinDir(baseDir, targetPath string) bool {
+	rel, err := filepath.Rel(baseDir, targetPath)
+	if err != nil {
+		return false
+	}
+	// rel 以 ".." 开头表示 targetPath 在 baseDir 之外
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
