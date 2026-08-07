@@ -3,10 +3,12 @@ package gz
 import (
 	"archive/tar"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 // CompressDirToTargz 压缩目录到tar.gz文件
@@ -25,33 +27,30 @@ import (
 //	│   └── testFile1.txt
 //	├── subdir2
 //	└── testFile.txt
-func CompressDirToTargz(dirPath, targetTarGzPath string) error {
+func CompressDirToTargz(dirPath, targetTarGzPath string) (err error) {
 	tarFile, err := os.Create(targetTarGzPath)
 	if err != nil {
 		return err
 	}
-	defer func(file *os.File) {
-		err := file.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := tarFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(tarFile)
+	}()
 
 	gzWriter := gzip.NewWriter(tarFile)
-	defer func(gzWriter *gzip.Writer) {
-		err := gzWriter.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := gzWriter.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(gzWriter)
+	}()
 
 	tarWriter := tar.NewWriter(gzWriter)
-	defer func(tarWriter *tar.Writer) {
-		err := tarWriter.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := tarWriter.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(tarWriter)
+	}()
 
 	err = filepath.Walk(dirPath, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -82,15 +81,14 @@ func CompressDirToTargz(dirPath, targetTarGzPath string) error {
 		if err != nil {
 			return err
 		}
-		defer func(file *os.File) {
-			err := file.Close()
-			if err != nil {
-				panic(err)
-			}
-		}(file)
 
-		_, err = io.Copy(tarWriter, file)
-		return err
+		// 显式关闭文件，避免在 Walk 回调中 defer 累积导致大量句柄同时打开
+		_, copyErr := io.Copy(tarWriter, file)
+		closeErr := file.Close()
+		if copyErr != nil {
+			return copyErr
+		}
+		return closeErr
 	})
 	if err != nil {
 		return err
@@ -115,28 +113,32 @@ func CompressDirToTargz(dirPath, targetTarGzPath string) error {
 //	    │   └── testFile1.txt
 //	    ├── subdir2
 //	    └── testFile.txt
-func UnCompressTargzToDir(sourceTarGzPath, dirPath string) error {
+func UnCompressTargzToDir(sourceTarGzPath, dirPath string) (err error) {
+	// 规范化目标目录路径，确保后续路径遍历检查可靠
+	absDirPath, err := filepath.Abs(filepath.Clean(dirPath))
+	if err != nil {
+		return err
+	}
+
 	sourceTarGz, err := os.Open(sourceTarGzPath)
 	if err != nil {
 		return err
 	}
-	defer func(sourceTarGz *os.File) {
-		err := sourceTarGz.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := sourceTarGz.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(sourceTarGz)
+	}()
 
 	gzReader, err := gzip.NewReader(sourceTarGz)
 	if err != nil {
 		return err
 	}
-	defer func(gzReader *gzip.Reader) {
-		err := gzReader.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := gzReader.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(gzReader)
+	}()
 
 	tarReader := tar.NewReader(gzReader)
 
@@ -148,7 +150,12 @@ func UnCompressTargzToDir(sourceTarGzPath, dirPath string) error {
 			return err
 		}
 
-		targetPath := filepath.Join(dirPath, header.Name)
+		targetPath := filepath.Join(absDirPath, header.Name)
+
+		// 路径遍历检查：防止恶意归档通过 ../../../ 等写入目标目录之外的路径
+		if !isWithinDir(absDirPath, targetPath) {
+			return fmt.Errorf("path traversal detected, refuse to extract: %s", header.Name)
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:
@@ -160,18 +167,28 @@ func UnCompressTargzToDir(sourceTarGzPath, dirPath string) error {
 			if err != nil {
 				return err
 			}
-			//goland:noinspection GoDeferInLoop
-			defer func(file *os.File) {
-				err := file.Close()
-				if err != nil {
-					panic(err)
-				}
-			}(file)
 
-			if _, err := io.Copy(file, tarReader); err != nil {
-				return err
+			// 显式关闭文件，避免在 for 循环中 defer 累积导致大量句柄同时打开
+			_, copyErr := io.Copy(file, tarReader)
+			closeErr := file.Close()
+			if copyErr != nil {
+				return copyErr
+			}
+			if closeErr != nil {
+				return closeErr
 			}
 		}
 	}
 	return nil
+}
+
+// isWithinDir 判断 targetPath 是否位于 baseDir 之内（含 baseDir 自身）
+// 通过比较清理后的绝对路径前缀，防止符号链接或 `..` 跳出 baseDir
+func isWithinDir(baseDir, targetPath string) bool {
+	rel, err := filepath.Rel(baseDir, targetPath)
+	if err != nil {
+		return false
+	}
+	// rel 以 ".." 开头表示 targetPath 在 baseDir 之外
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }

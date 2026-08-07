@@ -15,27 +15,25 @@ import (
 // @param targetZipPath 目标zip文件路径
 // @param includeRootDir 是否包含根目录（仅当sourcePath是目录时有效）
 // @return error 错误信息
-func Zip(sourcePath, targetZipPath string, includeRootDir bool) error {
+func Zip(sourcePath, targetZipPath string, includeRootDir bool) (err error) {
 	// 创建目标zip文件
 	zipFile, err := os.Create(targetZipPath)
 	if err != nil {
 		return err
 	}
-	defer func(zipFile *os.File) {
-		err := zipFile.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := zipFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(zipFile)
+	}()
 
 	// 创建zip写入器
 	zipWriter := zip.NewWriter(zipFile)
-	defer func(zipWriter *zip.Writer) {
-		err := zipWriter.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := zipWriter.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(zipWriter)
+	}()
 
 	// 获取源路径信息
 	sourceInfo, err := os.Stat(sourcePath)
@@ -81,7 +79,7 @@ func Zip(sourcePath, targetZipPath string, includeRootDir bool) error {
 }
 
 // addFileToZip 将文件添加到zip归档中
-func addFileToZip(zipWriter *zip.Writer, filePath, zipPath string, info os.FileInfo) error {
+func addFileToZip(zipWriter *zip.Writer, filePath, zipPath string, info os.FileInfo) (err error) {
 	// 创建zip文件头
 	header, err := zip.FileInfoHeader(info)
 	if err != nil {
@@ -116,12 +114,11 @@ func addFileToZip(zipWriter *zip.Writer, filePath, zipPath string, info os.FileI
 	if err != nil {
 		return err
 	}
-	defer func(sourceFile *os.File) {
-		err := sourceFile.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := sourceFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(sourceFile)
+	}()
 
 	// 使用带缓冲的读取器提高效率
 	bufReader := bufio.NewReader(sourceFile)
@@ -136,27 +133,25 @@ func addFileToZip(zipWriter *zip.Writer, filePath, zipPath string, info os.FileI
 // @param targetZipPath 目标zip文件路径
 // @param baseDir 在zip文件中的基础目录（可选，为空则无基础目录）
 // @return error 错误信息
-func ZipFiles(files []string, targetZipPath string, baseDir string) error {
+func ZipFiles(files []string, targetZipPath string, baseDir string) (err error) {
 	// 创建目标zip文件
 	zipFile, err := os.Create(targetZipPath)
 	if err != nil {
 		return err
 	}
-	defer func(zipFile *os.File) {
-		err := zipFile.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := zipFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(zipFile)
+	}()
 
 	// 创建zip写入器
 	zipWriter := zip.NewWriter(zipFile)
-	defer func(zipWriter *zip.Writer) {
-		err := zipWriter.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := zipWriter.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(zipWriter)
+	}()
 
 	// 处理每个文件
 	for _, filePath := range files {
@@ -186,8 +181,14 @@ func ZipFiles(files []string, targetZipPath string, baseDir string) error {
 // @return []string 解压文件路径列表
 // @return error 错误信息
 func Unzip(zipFile string, destDir string) ([]string, error) {
+	// 规范化目标目录路径，确保后续路径遍历检查可靠
+	absDestDir, err := filepath.Abs(filepath.Clean(destDir))
+	if err != nil {
+		return nil, fmt.Errorf("failed to get absolute destination directory: %w", err)
+	}
+
 	// 确保目标目录存在
-	if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
+	if err := os.MkdirAll(absDestDir, os.ModePerm); err != nil {
 		return nil, fmt.Errorf("failed to create destination directory: %w", err)
 	}
 
@@ -196,28 +197,27 @@ func Unzip(zipFile string, destDir string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open zip file %s: %w", zipFile, err)
 	}
-	defer func(zipReader *zip.ReadCloser) {
-		err := zipReader.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := zipReader.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(zipReader)
+	}()
 
 	var extractedPaths []string
 
 	// 遍历zip文件中的所有文件
 	for _, f := range zipReader.File {
-		// 安全检查：防止路径遍历攻击
-		if containsPathTraversal(f.Name) {
+		// 构建目标文件路径
+		destPath := filepath.Join(absDestDir, f.Name)
+
+		// 安全检查：防止路径遍历攻击，判断目标路径是否仍在解压目录之内
+		if !isWithinDir(absDestDir, destPath) {
 			return nil, fmt.Errorf("security violation: path traversal detected in file name '%s'", f.Name)
 		}
 
-		// 构建目标文件路径
-		destPath := filepath.Join(destDir, f.Name)
-
 		// 确保目标文件所在目录存在
-		destDir := filepath.Dir(destPath)
-		if err := os.MkdirAll(destDir, os.ModePerm); err != nil {
+		parentDir := filepath.Dir(destPath)
+		if err := os.MkdirAll(parentDir, os.ModePerm); err != nil {
 			return nil, fmt.Errorf("failed to create directory for %s: %w", f.Name, err)
 		}
 
@@ -239,39 +239,42 @@ func Unzip(zipFile string, destDir string) ([]string, error) {
 	return extractedPaths, nil
 }
 
-// containsPathTraversal 检查路径是否包含路径遍历字符
-func containsPathTraversal(path string) bool {
-	// 检查Unix/Linux和Windows的路径遍历模式
-	if strings.Contains(path, "../") || strings.Contains(path, "..\\") ||
-		strings.HasPrefix(path, "..") || strings.HasPrefix(path, "/") ||
-		strings.HasPrefix(path, "\\") || strings.HasPrefix(path, "C:") {
-		return true
+// isWithinDir 判断 targetPath 是否位于 baseDir 之内（含 baseDir 自身）
+// 通过比较清理后的相对路径，防止 `..`、绝对路径、UNC 路径等跳出 baseDir
+func isWithinDir(baseDir, targetPath string) bool {
+	rel, err := filepath.Rel(baseDir, targetPath)
+	if err != nil {
+		return false
 	}
-
-	// 检查规范化后的路径是否改变，这可以检测更复杂的路径遍历尝试
-	cleanPath := filepath.Clean(path)
-	return cleanPath != path || strings.HasPrefix(cleanPath, "..")
+	// rel 以 ".." 开头表示 targetPath 在 baseDir 之外
+	return rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 // extractFile 从zip文件中解压单个文件
-func extractFile(f *zip.File, destPath string) error {
+func extractFile(f *zip.File, destPath string) (err error) {
 	// 打开zip中的文件
 	inFile, err := f.Open()
 	if err != nil {
 		return err
 	}
-	// 注意：这里不使用defer，而是在函数结束前直接关闭，避免循环中积累大量未关闭的文件描述符
+	// 确保 inFile 在任何错误路径下都被关闭
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建目标文件
 	outFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
 	if err != nil {
-		// 确保在错误情况下也关闭inFile
-		err := inFile.Close()
-		if err != nil {
-			return err
-		}
 		return err
 	}
+	// 确保 outFile 在任何错误路径下都被关闭
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 使用带缓冲的读写器提高效率
 	bufReader := bufio.NewReader(inFile)
@@ -279,21 +282,16 @@ func extractFile(f *zip.File, destPath string) error {
 
 	// 复制文件内容
 	_, err = io.Copy(bufWriter, bufReader)
+	if err != nil {
+		return err
+	}
+
 	// 确保刷新缓冲区
-	if flushErr := bufWriter.Flush(); flushErr != nil && err == nil {
-		err = flushErr
+	if flushErr := bufWriter.Flush(); flushErr != nil {
+		return flushErr
 	}
 
-	// 关闭文件
-	if err := inFile.Close(); err != nil {
-		return err
-	}
-
-	if err := outFile.Close(); err != nil {
-		return err
-	}
-
-	return err
+	return nil
 }
 
 // UnzipSingleFile 从zip文件中解压单个文件
@@ -301,18 +299,17 @@ func extractFile(f *zip.File, destPath string) error {
 // @param fileName zip中的文件名
 // @param destPath 目标文件路径
 // @return error 错误信息
-func UnzipSingleFile(zipFile, fileName, destPath string) error {
+func UnzipSingleFile(zipFile, fileName, destPath string) (err error) {
 	// 打开zip文件
 	zipReader, err := zip.OpenReader(zipFile)
 	if err != nil {
 		return fmt.Errorf("failed to open zip file %s: %w", zipFile, err)
 	}
-	defer func(zipReader *zip.ReadCloser) {
-		err := zipReader.Close()
-		if err != nil {
-			panic(err)
+	defer func() {
+		if closeErr := zipReader.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(zipReader)
+	}()
 
 	// 查找指定的文件
 	for _, f := range zipReader.File {
