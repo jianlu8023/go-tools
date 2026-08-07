@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"syscall"
 )
 
@@ -22,7 +23,10 @@ type PidFile struct {
 	Pid string
 }
 
-var lPid *PidFile
+var (
+	lPid   *PidFile
+	lPidMu sync.RWMutex
+)
 
 func newPidFile(filename string) *PidFile {
 	return &PidFile{Pid: filename}
@@ -31,8 +35,15 @@ func newPidFile(filename string) *PidFile {
 // CreateOrUpdatePIDFile ensures that a PID file exists and contains the current process's PID.
 // It attempts to create the PID file if it does not exist, and update it if the process is not active.
 func CreateOrUpdatePIDFile(filename string) error {
+	lPidMu.Lock()
 	lPid = newPidFile(filename)
-	pid, err := readPIDValue(lPid.Pid)
+	lPidMu.Unlock()
+
+	lPidMu.RLock()
+	pidFilename := lPid.Pid
+	lPidMu.RUnlock()
+
+	pid, err := readPIDValue(pidFilename)
 	if err == nil {
 		active, err := isProcessActive(pid)
 		if err != nil {
@@ -42,12 +53,12 @@ func CreateOrUpdatePIDFile(filename string) error {
 			return ErrPIDExists
 		}
 	}
-	return createPIDFile(lPid.Pid)
+	return createPIDFile(pidFilename)
 }
 
 // createPIDFile creates or updates the PID file with the current process's PID.
 func createPIDFile(filename string) error {
-	pf, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0o644)
+	pf, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
 		return fmt.Errorf("error opening PID file: %w", err)
 	}
@@ -114,6 +125,8 @@ func readPIDValue(filename string) (int, error) {
 }
 
 func ReleasePID() {
+	lPidMu.RLock()
+	defer lPidMu.RUnlock()
 	if lPid == nil {
 		return
 	}
