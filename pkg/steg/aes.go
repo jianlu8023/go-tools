@@ -3,23 +3,26 @@ package steg
 import (
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/md5"
 )
 
-func encrypt(plainText, key []byte) []byte {
-	keyMd5 := md5.Sum(key)
-	block, _ := aes.NewCipher(keyMd5[:])
-	cfb := cipher.NewCFBEncrypter(block, keyMd5[:])
+func encrypt(plainText, key, iv []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	cfb := cipher.NewCFBEncrypter(block, iv)
 	cipherText := make([]byte, len(plainText))
 	cfb.XORKeyStream(cipherText, plainText)
-	return cipherText
+	return cipherText, nil
 }
 
-func decrypt(cipherText, key []byte) []byte {
-	keyMd5 := md5.Sum(key)
-	block, _ := aes.NewCipher(keyMd5[:])
-	cfb := cipher.NewCFBDecrypter(block, keyMd5[:])
+func decrypt(cipherText, key, iv []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	cfb := cipher.NewCFBDecrypter(block, iv)
 	plainText := make([]byte, len(cipherText))
 	cfb.XORKeyStream(plainText, cipherText)
-	return plainText
+	return plainText, nil
 }
