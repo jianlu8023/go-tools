@@ -3,12 +3,12 @@ package pretty
 import (
 	"bytes"
 	"fmt"
+	"github.com/jianlu8023/go-tools/v2/pkg/json/sonic"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/jianlu8023/go-tools/v2/internal/colour"
-	"github.com/jianlu8023/go-tools/v2/pkg/sonic"
 )
 
 // Formatter is a struct to format JSON data.
@@ -76,8 +76,6 @@ func (f *Formatter) pretty(v interface{}, depth int) string {
 		// 处理其他可能的类型
 		return fmt.Sprintf("%v", val)
 	}
-
-	return ""
 }
 
 func (f *Formatter) processString(s string) string {
