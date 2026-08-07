@@ -1,8 +1,6 @@
 package base64x
 
 import (
-	"strings"
-
 	"github.com/cloudwego/base64x"
 )
 
@@ -40,12 +38,28 @@ func ToByteURL(data string) ([]byte, error) {
 // @param data 输入字节数组
 // @return string 不带填充的 base64 编码字符串
 func ToBase64NoPadding(data []byte) string {
-	return strings.TrimRight(base64x.RawStdEncoding.EncodeToString(data), "=")
+	return base64x.RawStdEncoding.EncodeToString(data)
+}
+
+// ToByteNoPadding 解码不带填充的标准 base64 字符串
+// @param data 不带填充的 base64 编码字符串
+// @return []byte 解码后的字节数组
+// @return error 解码过程中的错误
+func ToByteNoPadding(data string) ([]byte, error) {
+	return base64x.RawStdEncoding.DecodeString(data)
 }
 
 // ToBase64URLNoPadding 编码为不带填充的 URL 安全 base64 字符串
 // @param data 输入字节数组
 // @return string 不带填充的 URL 安全 base64 编码字符串
 func ToBase64URLNoPadding(data []byte) string {
-	return strings.TrimRight(base64x.RawURLEncoding.EncodeToString(data), "=")
+	return base64x.RawURLEncoding.EncodeToString(data)
+}
+
+// ToByteURLNoPadding 解码不带填充的 URL 安全 base64 字符串
+// @param data 不带填充的 URL 安全 base64 编码字符串
+// @return []byte 解码后的字节数组
+// @return error 解码过程中的错误
+func ToByteURLNoPadding(data string) ([]byte, error) {
+	return base64x.RawURLEncoding.DecodeString(data)
 }

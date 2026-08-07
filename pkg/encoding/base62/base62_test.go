@@ -71,7 +71,7 @@ func TestBase62ToIntBasic(t *testing.T) {
 }
 
 func TestEncodeDecodeBasic(t *testing.T) {
-	// 只测试编码解码一致性，不依赖于具体的编码结果
+	// 测试编码解码一致性，包含长字节数组（验证 N-E01/N-E03 修复）
 	tests := []struct {
 		name  string
 		input []byte
@@ -84,13 +84,28 @@ func TestEncodeDecodeBasic(t *testing.T) {
 	}, {
 		name:  "short bytes",
 		input: []byte{0x01, 0x02, 0x03}, // 短二进制数据
+	}, {
+		name:  "leading zero bytes",
+		input: []byte{0x00, 0x05}, // 前导零字节（验证 N-E03 修复）
+	}, {
+		name:  "all zeros",
+		input: []byte{0x00, 0x00, 0x00},
+	}, {
+		name:  "high bit set (negative int64)",
+		input: []byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}, // 验证 N-E02 修复
+	}, {
+		name:  "long bytes > 8",
+		input: []byte("Hello, World! This is a long string."), // 验证 N-E01 修复
+	}, {
+		name:  "exactly 7 bytes",
+		input: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07},
+	}, {
+		name:  "14 bytes (two groups)",
+		input: []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E},
 	}}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if len(tt.input) > 8 {
-				t.Skip("Skipping test for long bytes")
-			}
 			encoded := Encode(tt.input)
 			decoded, err := Decode(encoded)
 			assert.NoError(t, err)
