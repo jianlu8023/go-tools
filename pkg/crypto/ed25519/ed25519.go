@@ -80,7 +80,7 @@ func VerifyText(publicKey ed25519.PublicKey, text string, signature []byte) (boo
 // privateKey: Ed25519私钥
 // filename: 文件名
 // 返回错误信息
-func SavePrivateKey(privateKey ed25519.PrivateKey, filename string) error {
+func SavePrivateKey(privateKey ed25519.PrivateKey, filename string) (err error) {
 	// 将私钥编码为PKCS#8格式
 	privateKeyBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
@@ -98,7 +98,11 @@ func SavePrivateKey(privateKey ed25519.PrivateKey, filename string) error {
 	if err != nil {
 		return fmt.Errorf("创建私钥文件失败: %v", err)
 	}
-	defer privateKeyFile.Close()
+	defer func() {
+		if closeErr := privateKeyFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	err = pem.Encode(privateKeyFile, privateKeyPEM)
 	if err != nil {
@@ -112,7 +116,7 @@ func SavePrivateKey(privateKey ed25519.PrivateKey, filename string) error {
 // publicKey: Ed25519公钥
 // filename: 文件名
 // 返回错误信息
-func SavePublicKey(publicKey ed25519.PublicKey, filename string) error {
+func SavePublicKey(publicKey ed25519.PublicKey, filename string) (err error) {
 	// 将公钥编码为PKIX格式
 	publicKeyBytes, err := x509.MarshalPKIXPublicKey(publicKey)
 	if err != nil {
@@ -130,7 +134,11 @@ func SavePublicKey(publicKey ed25519.PublicKey, filename string) error {
 	if err != nil {
 		return fmt.Errorf("创建公钥文件失败: %v", err)
 	}
-	defer publicKeyFile.Close()
+	defer func() {
+		if closeErr := publicKeyFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	err = pem.Encode(publicKeyFile, publicKeyPEM)
 	if err != nil {
@@ -150,7 +158,7 @@ func LoadPrivateKey(filename string) (ed25519.PrivateKey, error) {
 		return nil, fmt.Errorf("读取私钥文件失败: %v", err)
 	}
 
-	// 解码PEM块
+	// 解码PEM块（只处理第一个PEM块，剩余数据将被忽略）
 	privateKeyPEM, _ := pem.Decode(privateKeyBytes)
 	if privateKeyPEM == nil {
 		return nil, fmt.Errorf("解析私钥PEM块失败")
@@ -181,7 +189,7 @@ func LoadPublicKey(filename string) (ed25519.PublicKey, error) {
 		return nil, fmt.Errorf("读取公钥文件失败: %v", err)
 	}
 
-	// 解码PEM块
+	// 解码PEM块（只处理第一个PEM块，剩余数据将被忽略）
 	publicKeyPEM, _ := pem.Decode(publicKeyBytes)
 	if publicKeyPEM == nil {
 		return nil, fmt.Errorf("解析公钥PEM块失败")

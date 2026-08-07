@@ -45,7 +45,7 @@ func EncryptText(text string, publicKey *rsa.PublicKey) ([]byte, error) {
 // outputFile: 加密后文件路径
 // publicKey: RSA公钥
 // error: 错误信息
-func EncryptFile(inputFile, outputFile string, publicKey *rsa.PublicKey) error {
+func EncryptFile(inputFile, outputFile string, publicKey *rsa.PublicKey) (err error) {
 	// 验证参数
 	if publicKey == nil {
 		return fmt.Errorf("公钥不能为空")
@@ -55,21 +55,21 @@ func EncryptFile(inputFile, outputFile string, publicKey *rsa.PublicKey) error {
 	if err != nil {
 		return fmt.Errorf("打开待加密文件失败: %v", err)
 	}
-	defer func(inFile *os.File) {
-		if err := inFile.Close(); err != nil {
-			fmt.Printf("关闭文件失败: %v\n", err)
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(inFile)
+	}()
 
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建加密文件失败: %v", err)
 	}
-	defer func(outFile *os.File) {
-		if err := outFile.Close(); err != nil {
-			fmt.Printf("关闭文件失败: %v\n", err)
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(outFile)
+	}()
 
 	blockSize := publicKey.Size() - 11
 	buffer := make([]byte, blockSize)

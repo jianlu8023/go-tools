@@ -48,7 +48,7 @@ func DecryptText(ciphertext []byte, privateKey *rsa.PrivateKey) (string, error) 
 // outputFile: 解密后文件路径
 // privateKey: RSA私钥
 // error: 错误信息
-func DecryptFile(inputFile, outputFile string, privateKey *rsa.PrivateKey) error {
+func DecryptFile(inputFile, outputFile string, privateKey *rsa.PrivateKey) (err error) {
 	// 验证参数
 	if privateKey == nil {
 		return fmt.Errorf("私钥不能为空")
@@ -58,37 +58,37 @@ func DecryptFile(inputFile, outputFile string, privateKey *rsa.PrivateKey) error
 	if err != nil {
 		return fmt.Errorf("打开输入文件错误: %v", err)
 	}
-	defer func(inFile *os.File) {
-		if err := inFile.Close(); err != nil {
-			fmt.Printf("关闭输入文件错误: %v\n", err)
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(inFile)
+	}()
 
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建输出文件错误: %v", err)
 	}
-	defer func(outFile *os.File) {
-		if err := outFile.Close(); err != nil {
-			fmt.Printf("关闭输出文件错误: %v\n", err)
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(outFile)
+	}()
 
 	blockSize := privateKey.Size()
 	buffer := make([]byte, blockSize)
 
 	for {
-		n, err := inFile.Read(buffer)
-		if err != nil && err != io.EOF {
+		// 使用 io.ReadFull 确保读满一个块，避免短读缺陷
+		n, err := io.ReadFull(inFile, buffer)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			if err == io.ErrUnexpectedEOF {
+				// 加密文件应为 blockSize 的整数倍，部分块表示文件已损坏
+				return fmt.Errorf("加密文件已损坏，读取到部分块")
+			}
 			return fmt.Errorf("使用buffer读取输入文件错误: %v", err)
-		}
-		if n == 0 {
-			break
-		}
-
-		// 检查块大小
-		if n != blockSize {
-			// 最后一个块可能小于blockSize，这是正常的
 		}
 
 		decryptedBlock, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, buffer[:n])

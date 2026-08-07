@@ -2,6 +2,7 @@ package argon2
 
 import (
 	"crypto/rand"
+	"crypto/subtle"
 	"fmt"
 	"io"
 
@@ -132,15 +133,9 @@ func Verify(password, hash, salt []byte, params Params) (bool, error) {
 		return false, fmt.Errorf("哈希密码失败: %v", err)
 	}
 
-	// 比较哈希值
-	if len(computedHash) != len(hash) {
+	// 使用常量时间比较哈希值，避免时序侧信道
+	if subtle.ConstantTimeCompare(computedHash, hash) != 1 {
 		return false, nil
-	}
-
-	for i := range computedHash {
-		if computedHash[i] != hash[i] {
-			return false, nil
-		}
 	}
 
 	return true, nil

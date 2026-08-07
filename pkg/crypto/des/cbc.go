@@ -58,8 +58,8 @@ func CBCDecrypt(key, ciphertext []byte) ([]byte, error) {
 	}
 
 	// 验证密文长度
-	if len(ciphertext) < blockSize {
-		return nil, fmt.Errorf("密文长度不足，至少需要%d字节", blockSize)
+	if len(ciphertext) == 0 || len(ciphertext)%blockSize != 0 {
+		return nil, fmt.Errorf("密文长度必须为%d的倍数", blockSize)
 	}
 
 	block, err := des.NewCipher(key)

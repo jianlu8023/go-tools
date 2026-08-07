@@ -101,7 +101,7 @@ func CTRDecryptText(key, ciphertext []byte) (string, error) {
 // inputFile: 输入文件路径
 // outputFile: 输出文件路径
 // error: 错误信息
-func CTREncryptFile(key, inputFile, outputFile string) error {
+func CTREncryptFile(key, inputFile, outputFile string) (err error) {
 	// 验证密钥长度
 	if len(key) != 16 {
 		return fmt.Errorf("SM4密钥长度必须为16字节，当前长度为%d字节", len(key))
@@ -109,15 +109,23 @@ func CTREncryptFile(key, inputFile, outputFile string) error {
 
 	inFile, err := os.Open(inputFile)
 	if err != nil {
-		return fmt.Errorf("打开输出文件错误: %v", err)
+		return fmt.Errorf("打开输入文件错误: %v", err)
 	}
-	defer inFile.Close()
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建输出文件错误: %v", err)
 	}
-	defer outFile.Close()
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	block, err := sm4.NewCipher([]byte(key))
 	if err != nil {
@@ -158,7 +166,7 @@ func CTREncryptFile(key, inputFile, outputFile string) error {
 // inputFile: 输入文件路径
 // outputFile: 输出文件路径
 // error: 错误信息
-func CTRDecryptFile(key, inputFile, outputFile string) error {
+func CTRDecryptFile(key, inputFile, outputFile string) (err error) {
 	// 验证密钥长度
 	if len(key) != 16 {
 		return fmt.Errorf("SM4密钥长度必须为16字节，当前长度为%d字节", len(key))
@@ -168,13 +176,21 @@ func CTRDecryptFile(key, inputFile, outputFile string) error {
 	if err != nil {
 		return fmt.Errorf("打开输入文件错误: %v", err)
 	}
-	defer inFile.Close()
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建输出文件错误: %v", err)
 	}
-	defer outFile.Close()
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	block, err := sm4.NewCipher([]byte(key))
 	if err != nil {

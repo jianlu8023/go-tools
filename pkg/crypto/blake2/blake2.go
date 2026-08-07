@@ -14,6 +14,7 @@ import (
 type HashFunc func() (hash.Hash, error)
 
 // 支持的哈希函数
+// 注意：这些变量为函数类型，外部代码不应重新赋值，否则会破坏包内的默认行为。
 var (
 	Blake2b_256 HashFunc = func() (hash.Hash, error) { return blake2b.New256(nil) }
 	Blake2b_384 HashFunc = func() (hash.Hash, error) { return blake2b.New384(nil) }

@@ -58,8 +58,8 @@ func CBCDecrypt(key, ciphertext []byte) ([]byte, error) {
 	}
 
 	// 验证密文长度
-	if len(ciphertext) < blockSize {
-		return nil, fmt.Errorf("密文长度不足，至少需要%d字节", blockSize)
+	if len(ciphertext) == 0 || len(ciphertext)%blockSize != 0 {
+		return nil, fmt.Errorf("密文长度必须为%d的倍数", blockSize)
 	}
 
 	block, err := des.NewTripleDESCipher(key)
@@ -110,7 +110,7 @@ func CBCDecryptText(key, ciphertext []byte) (string, error) {
 // inputFile: 输入文件路径
 // outputFile: 输出文件路径
 // error: 错误信息
-func CBCEncryptFile(key, inputFile, outputFile string) error {
+func CBCEncryptFile(key, inputFile, outputFile string) (err error) {
 	// 验证密钥长度
 	if len(key) != 24 {
 		return fmt.Errorf("3DES密钥长度必须为24字节，当前长度为%d字节", len(key))
@@ -120,21 +120,21 @@ func CBCEncryptFile(key, inputFile, outputFile string) error {
 	if err != nil {
 		return fmt.Errorf("打开输入文件错误: %v", err)
 	}
-	defer func(inFile *os.File) {
-		if err := inFile.Close(); err != nil {
-			fmt.Printf("关闭输入文件错误: %v\n", err)
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(inFile)
+	}()
 
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建输出文件错误: %v", err)
 	}
-	defer func(outFile *os.File) {
-		if err := outFile.Close(); err != nil {
-			fmt.Printf("关闭输出文件错误: %v\n", err)
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(outFile)
+	}()
 
 	block, err := des.NewTripleDESCipher([]byte(key))
 	if err != nil {
@@ -188,7 +188,7 @@ func CBCEncryptFile(key, inputFile, outputFile string) error {
 // inputFile: 输入文件路径
 // outputFile: 输出文件路径
 // error: 错误信息
-func CBCDecryptFile(key, inputFile, outputFile string) error {
+func CBCDecryptFile(key, inputFile, outputFile string) (err error) {
 	// 验证密钥长度
 	if len(key) != 24 {
 		return fmt.Errorf("3DES密钥长度必须为24字节，当前长度为%d字节", len(key))
@@ -198,21 +198,21 @@ func CBCDecryptFile(key, inputFile, outputFile string) error {
 	if err != nil {
 		return fmt.Errorf("打开输入文件错误: %v", err)
 	}
-	defer func(inFile *os.File) {
-		if err := inFile.Close(); err != nil {
-			fmt.Printf("关闭输入文件错误: %v\n", err)
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(inFile)
+	}()
 
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建输出文件错误: %v", err)
 	}
-	defer func(outFile *os.File) {
-		if err := outFile.Close(); err != nil {
-			fmt.Printf("关闭输出文件错误: %v\n", err)
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
 		}
-	}(outFile)
+	}()
 
 	block, err := des.NewTripleDESCipher([]byte(key))
 	if err != nil {

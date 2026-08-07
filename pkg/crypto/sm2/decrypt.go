@@ -1,6 +1,7 @@
 package sm2
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	"os"
@@ -53,12 +54,20 @@ func DecryptText(ciphertext []byte, privateKey *sm2.PrivateKey, c1c2c3 bool) (st
 }
 
 // DecryptFile 使用 SM2 算法解密文件
+//
+// 警告: SM2 为非对称加密算法，按块调用私钥解密性能远低于对称加密（如 SM4），
+// 不适合解密大文件。建议对大文件采用混合加密方案：
+// 先用 SM4 等对称算法解密文件内容，再用 SM2 解密 SM4 密钥。
+//
+// 文件格式: 与 EncryptFile 配套，循环读取 4 字节大端序长度前缀，
+// 再按长度读取对应密文块，逐块解密拼接。
+//
 // inputFile: 待解密的文件路径
 // outputFile: 解密后的文件路径
 // privateKey: SM2 私钥
 // c1c2c3: 是否使用 C1C2C3 格式
 // error: 错误信息
-func DecryptFile(inputFile, outputFile string, privateKey *sm2.PrivateKey, c1c2c3 bool) error {
+func DecryptFile(inputFile, outputFile string, privateKey *sm2.PrivateKey, c1c2c3 bool) (err error) {
 	// 验证参数
 	if privateKey == nil {
 		return fmt.Errorf("私钥不能为空")
@@ -74,7 +83,11 @@ func DecryptFile(inputFile, outputFile string, privateKey *sm2.PrivateKey, c1c2c
 	if err != nil {
 		return fmt.Errorf("创建解密文件失败: %v", err)
 	}
-	defer outFile.Close()
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	var mode int
 	if c1c2c3 {
@@ -83,25 +96,33 @@ func DecryptFile(inputFile, outputFile string, privateKey *sm2.PrivateKey, c1c2c
 		mode = sm2.C1C3C2
 	}
 
-	buffer := make([]byte, decryptBlockSize)
-
+	lenBuf := make([]byte, 4)
 	for {
-		n, err := inFile.Read(buffer)
-		if err != nil && err != io.EOF {
-			return fmt.Errorf("使用buffer读取输入文件错误: %v", err)
-		}
-		if n == 0 {
+		// 读取 4 字节长度前缀
+		_, err = io.ReadFull(inFile, lenBuf)
+		if err == io.EOF {
 			break
 		}
-
-		decryptedBlock, err := sm2.Decrypt(privateKey, buffer[:n], mode)
 		if err != nil {
-			return fmt.Errorf("解密文件失败: %v", err)
+			return fmt.Errorf("读取密文长度前缀失败: %v", err)
+		}
+		cipherLen := binary.BigEndian.Uint32(lenBuf)
+
+		// 读取对应长度的密文块
+		cipherData := make([]byte, cipherLen)
+		if _, err = io.ReadFull(inFile, cipherData); err != nil {
+			return fmt.Errorf("读取密文块失败: %v", err)
 		}
 
-		_, err = outFile.Write(decryptedBlock)
-		if err != nil {
-			return fmt.Errorf("写入解密文件失败: %v", err)
+		// 解密
+		plainData, decErr := sm2.Decrypt(privateKey, cipherData, mode)
+		if decErr != nil {
+			return fmt.Errorf("解密文件失败: %v", decErr)
+		}
+
+		// 写入明文
+		if _, wErr := outFile.Write(plainData); wErr != nil {
+			return fmt.Errorf("写入解密文件失败: %v", wErr)
 		}
 	}
 

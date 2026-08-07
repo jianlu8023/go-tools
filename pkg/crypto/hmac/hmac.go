@@ -12,6 +12,7 @@ import (
 type HashFunc func() hash.Hash
 
 // 支持的哈希函数
+// 注意：这些变量为函数类型，外部代码不应重新赋值，否则会破坏包内的默认行为。
 var (
 	SHA256 HashFunc = sha256.New
 	SHA384 HashFunc = sha512.New384

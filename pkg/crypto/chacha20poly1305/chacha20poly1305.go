@@ -129,7 +129,7 @@ func DecryptText(key, ciphertext, additionalData []byte) (string, error) {
 // outputFile: 输出文件路径
 // additionalData: 附加数据（可选）
 // 返回错误信息
-func EncryptFile(key []byte, inputFile, outputFile string, additionalData []byte) error {
+func EncryptFile(key []byte, inputFile, outputFile string, additionalData []byte) (err error) {
 	// 验证密钥长度
 	if len(key) != KeySize {
 		return fmt.Errorf("密钥长度必须为%d字节，当前长度为%d字节", KeySize, len(key))
@@ -140,14 +140,22 @@ func EncryptFile(key []byte, inputFile, outputFile string, additionalData []byte
 	if err != nil {
 		return fmt.Errorf("打开输入文件失败: %v", err)
 	}
-	defer inFile.Close()
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建输出文件
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建输出文件失败: %v", err)
 	}
-	defer outFile.Close()
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 读取文件内容
 	plaintext, err := io.ReadAll(inFile)
@@ -176,7 +184,7 @@ func EncryptFile(key []byte, inputFile, outputFile string, additionalData []byte
 // outputFile: 输出文件路径
 // additionalData: 附加数据（可选）
 // 返回错误信息
-func DecryptFile(key []byte, inputFile, outputFile string, additionalData []byte) error {
+func DecryptFile(key []byte, inputFile, outputFile string, additionalData []byte) (err error) {
 	// 验证密钥长度
 	if len(key) != KeySize {
 		return fmt.Errorf("密钥长度必须为%d字节，当前长度为%d字节", KeySize, len(key))
@@ -187,14 +195,22 @@ func DecryptFile(key []byte, inputFile, outputFile string, additionalData []byte
 	if err != nil {
 		return fmt.Errorf("打开输入文件失败: %v", err)
 	}
-	defer inFile.Close()
+	defer func() {
+		if closeErr := inFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 创建输出文件
 	outFile, err := os.Create(outputFile)
 	if err != nil {
 		return fmt.Errorf("创建输出文件失败: %v", err)
 	}
-	defer outFile.Close()
+	defer func() {
+		if closeErr := outFile.Close(); closeErr != nil && err == nil {
+			err = closeErr
+		}
+	}()
 
 	// 读取文件内容
 	ciphertext, err := io.ReadAll(inFile)

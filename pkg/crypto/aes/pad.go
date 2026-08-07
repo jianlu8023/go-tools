@@ -15,7 +15,9 @@ func pkcs7Padding(src []byte, blockSize int) []byte {
 	}
 	padding := blockSize - len(src)%blockSize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(src, padtext...)
+	result := make([]byte, len(src), len(src)+padding)
+	copy(result, src)
+	return append(result, padtext...)
 }
 
 // pkcs7UnPadding 移除 PKCS#7 填充
