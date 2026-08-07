@@ -2,7 +2,10 @@ package stringer
 
 import (
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 const (
@@ -106,10 +109,15 @@ func DeduplicateString(str string, separator string, ignoreEmpty bool) string {
 // @param replacements: 替换的信息
 // @return string: 替换后
 func Replace(template string, replacements map[string]string) string {
-	for pattern, replacement := range replacements {
-		re := regexp.MustCompile(pattern)
-		template = re.ReplaceAllString(template, replacement)
-
+	keys := make([]string, 0, len(replacements))
+	for k := range replacements {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return len(keys[i]) > len(keys[j])
+	})
+	for _, k := range keys {
+		template = strings.ReplaceAll(template, k, replacements[k])
 	}
 	return template
 }
@@ -120,17 +128,18 @@ func Replace(template string, replacements map[string]string) string {
 // @param end: 结束索引
 // @return string: 截取的子字符串
 func Substring(str string, start, end int) string {
-	// 处理边界条件
+	runes := []rune(str)
+	strLen := len(runes)
 	if start < 0 {
 		start = 0
 	}
-	if end > len(str) {
-		end = len(str)
+	if end > strLen {
+		end = strLen
 	}
 	if start >= end {
 		return ""
 	}
-	return str[start:end]
+	return string(runes[start:end])
 }
 
 // CountOccurrences 计算子字符串出现的次数
@@ -198,13 +207,17 @@ func ToSnakeCase(str string) string {
 // @param suffix: 截断后的后缀
 // @return string: 截断后的字符串
 func Truncate(str string, maxLength int, suffix string) string {
-	if len(str) <= maxLength {
+	strLen := utf8.RuneCountInString(str)
+	suffixLen := utf8.RuneCountInString(suffix)
+	if strLen <= maxLength {
 		return str
 	}
-	if maxLength <= len(suffix) {
-		return suffix[:maxLength]
+	if maxLength <= suffixLen {
+		runes := []rune(suffix)
+		return string(runes[:maxLength])
 	}
-	return str[:maxLength-len(suffix)] + suffix
+	runes := []rune(str)
+	return string(runes[:maxLength-suffixLen]) + suffix
 }
 
 // PadLeft 在字符串左侧填充字符
@@ -268,4 +281,30 @@ func Reverse(str string) string {
 // @return string: 连接后的字符串
 func Join(elements []string, separator string) string {
 	return strings.Join(elements, separator)
+}
+
+// github.com/samber/lo
+
+func GetStringIfEmpty(str string, defaultValue string) string {
+	if str == "" {
+		return defaultValue
+	}
+	return str
+}
+
+func String2Int(str string) int {
+	num, err := strconv.Atoi(str)
+	if err != nil {
+		return 0
+	}
+	return num
+}
+
+func StringsContains(strs []string, str string) bool {
+	for _, s := range strs {
+		if s == str {
+			return true
+		}
+	}
+	return false
 }
