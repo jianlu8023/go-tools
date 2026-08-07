@@ -23,11 +23,17 @@ func (bitmap *Bitmap) fillLen(length int) {
 }
 
 func (bitmap *Bitmap) Has(num int) bool {
+	if num < 0 {
+		return false
+	}
 	word, bit := num/64, uint(num%64)
 	return word < len(bitmap.words) && (bitmap.words[word]&(1<<bit)) != 0
 }
 
 func (bitmap *Bitmap) Set(num int) *Bitmap {
+	if num < 0 {
+		panic(fmt.Sprintf("bitmap: negative bit position %d", num))
+	}
 	word, bit := num/64, uint(num%64)
 	for word >= len(bitmap.words) {
 		bitmap.words = append(bitmap.words, 0)
