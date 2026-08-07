@@ -196,6 +196,11 @@ func BytesPrefix(prefix []byte) ([]byte, []byte) {
 }
 
 // StringToBytes converts string to byte slice without a memory allocation.
+//
+// WARNING: 返回的 []byte 与入参 string 共享底层内存（零拷贝）。
+// 调用方不得修改返回切片的任何元素，否则会破坏 string 的不可变性，
+// 进而导致不可预期的行为（Go 运行时假设 string 内容恒定不变）。
+// 若需要可修改的切片，请使用 []byte(s) 或 Clone。
 func StringToBytes(s string) []byte {
 	return *(*[]byte)(unsafe.Pointer(
 		&struct {
@@ -206,6 +211,11 @@ func StringToBytes(s string) []byte {
 }
 
 // BytesToString converts byte slice to string without a memory allocation.
+//
+// WARNING: 返回的 string 与入参 []byte 共享底层内存（零拷贝）。
+// 在 string 生命周期内，调用方不得继续修改入参切片的任何元素，
+// 否则会破坏 string 的不可变性，进而导致不可预期的行为。
+// 若需要独立的 string，请使用 string(b)（会拷贝）。
 func BytesToString(b []byte) string {
 	return *(*string)(unsafe.Pointer(&b))
 }
@@ -237,24 +247,10 @@ func Compare(a, b []byte) int {
 }
 
 // Equal checks if two byte slices are equal.
-// nil and empty slice are considered not equal.
+// 两个切片在长度相同且所有对应字节相等时返回 true，否则返回 false。
+// nil 与空切片被视为相等（二者长度均为 0）。
 func Equal(a, b []byte) bool {
-	// 特殊处理nil和空切片的情况
-	if (a == nil && b != nil) || (a != nil && b == nil) {
-		return false
-	}
-
-	if len(a) != len(b) {
-		return false
-	}
-
-	for i := range a {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-
-	return true
+	return bytes.Equal(a, b)
 }
 
 // Clone creates a copy of the given byte slice.
