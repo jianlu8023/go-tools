@@ -1,160 +1,130 @@
 package json
 
 import (
-	"errors"
+	"bytes"
+	"encoding/json"
 	"io"
-	"os"
-	"strings"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/jianlu8023/go-tools/v2/pkg/json/sonic"
 )
 
-var (
-	// ErrInvalidJSON 表示JSON格式无效
-	ErrInvalidJSON = errors.New("invalid JSON format")
-	// ErrFileNotFound 表示文件未找到
-	ErrFileNotFound = errors.New("JSON file not found")
-	// ErrReadingFile 表示读取文件失败
-	ErrReadingFile = errors.New("failed to read JSON file")
-	// ErrWritingFile 表示写入文件失败
-	ErrWritingFile = errors.New("failed to write JSON file")
-)
+type API interface {
+	Marshal(v interface{}) ([]byte, error)
+	MarshalIndent(v interface{}, prefix, indent string) ([]byte, error)
+	NewEncoder(w io.Writer) Encoder
+	Unmarshal(data []byte, v interface{}) error
+	NewDecoder(r io.Reader) Decoder
+	MarshalPretty(v interface{}) ([]byte, error)
+	MarshalString(v interface{}) (string, error)
+	UnmarshalString(str string, v interface{}) error
+	ReadFromFile(filePath string, v interface{}) error
+	WriteToFile(filePath string, v interface{}) error
+	Validate(jsonStr string) bool
+	Compact(jsonStr string) (string, error)
+}
 
-// Marshal 将Go对象转换为JSON字节数组
-// 这是对jsoniter.Marshal的封装，提供更好的性能
+type Encoder interface {
+	Encode(v interface{}) error
+}
+
+type Decoder interface {
+	Decode(v interface{}) error
+}
+
+func NewSonicAPI() API {
+	return &sonicAPI{Sonic: sonic.NewStandardSonic()}
+}
+
+func NewJsoniterAPI() API {
+	return &jsoniterAPI{}
+}
+
+var defaultAPI = NewSonicAPI()
+
 func Marshal(v interface{}) ([]byte, error) {
-	return jsoniter.Marshal(v)
+	return defaultAPI.Marshal(v)
 }
 
-// MarshalIndent 生成格式化的JSON字节数组
-// prefix: 每行的前缀
-// indent: 缩进字符串，通常是空格或制表符
 func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error) {
-	return jsoniter.MarshalIndent(v, prefix, indent)
+	return defaultAPI.MarshalIndent(v, prefix, indent)
 }
 
-// NewEncoder 创建一个新的JSON编码器
-func NewEncoder(w io.Writer) *jsoniter.Encoder {
-	return jsoniter.NewEncoder(w)
+func NewEncoder(w io.Writer) Encoder {
+	return defaultAPI.NewEncoder(w)
 }
 
-// Unmarshal 将JSON字节数组解析为Go对象
 func Unmarshal(data []byte, v interface{}) error {
-	if len(data) == 0 {
-		return nil // 空数据视为有效输入
-	}
-	return jsoniter.Unmarshal(data, v)
+	return defaultAPI.Unmarshal(data, v)
 }
 
-// NewDecoder 创建一个新的JSON解码器
-func NewDecoder(r io.Reader) *jsoniter.Decoder {
-	return jsoniter.NewDecoder(r)
+func NewDecoder(r io.Reader) Decoder {
+	return defaultAPI.NewDecoder(r)
 }
 
-// MarshalPretty 生成美化的JSON字符串，带有标准缩进
 func MarshalPretty(v interface{}) ([]byte, error) {
-	return MarshalIndent(v, "", "  ")
+	return defaultAPI.MarshalPretty(v)
 }
 
-// MarshalString 将Go对象转换为JSON字符串
 func MarshalString(v interface{}) (string, error) {
-	bytes, err := Marshal(v)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
+	return defaultAPI.MarshalString(v)
 }
 
-// UnmarshalString 将JSON字符串解析为Go对象
-func UnmarshalString(s string, v interface{}) error {
-	return Unmarshal([]byte(s), v)
+func UnmarshalString(str string, v interface{}) error {
+	return defaultAPI.UnmarshalString(str, v)
 }
 
-// ReadFromFile 从文件中读取JSON数据并解析为Go对象
 func ReadFromFile(filePath string, v interface{}) error {
-	// 检查文件是否存在
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		return ErrFileNotFound
-	}
-
-	// 读取文件内容
-	data, err := os.ReadFile(filePath)
-	if err != nil {
-		return errors.Join(ErrReadingFile, err)
-	}
-
-	// 解析JSON数据
-	if err := Unmarshal(data, v); err != nil {
-		return errors.Join(ErrInvalidJSON, err)
-	}
-
-	return nil
+	return defaultAPI.ReadFromFile(filePath, v)
 }
 
-// WriteToFile 将Go对象序列化为JSON并写入文件
 func WriteToFile(filePath string, v interface{}) error {
-	// 序列化Go对象为JSON
-	data, err := MarshalPretty(v)
-	if err != nil {
-		return err
-	}
-
-	// 写入文件
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
-		return errors.Join(ErrWritingFile, err)
-	}
-
-	return nil
+	return defaultAPI.WriteToFile(filePath, v)
 }
 
-// Validate 验证JSON字符串是否有效
 func Validate(jsonStr string) bool {
-	return jsoniter.Valid([]byte(jsonStr))
+	return defaultAPI.Validate(jsonStr)
 }
 
-// Compact 压缩JSON字符串，移除所有空白字符
 func Compact(jsonStr string) (string, error) {
-	// 检查JSON是否有效
-	if !Validate(jsonStr) {
-		return "", ErrInvalidJSON
+	return defaultAPI.Compact(jsonStr)
+}
+
+func UseSonic() {
+	defaultAPI = NewSonicAPI()
+}
+
+func UseJsoniter() {
+	defaultAPI = NewJsoniterAPI()
+}
+
+func IsJsonArray(str string) bool {
+	var js []interface{}
+	return defaultAPI.Unmarshal([]byte(str), &js) == nil
+}
+
+func IsJsonObject(str string) bool {
+	var js map[string]interface{}
+	return defaultAPI.Unmarshal([]byte(str), &js) == nil
+}
+
+func GetJsonType(data json.RawMessage) string {
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) == 0 {
+		return "unknown"
 	}
-
-	// 手动实现压缩逻辑
-	var buf strings.Builder
-	buf.Grow(len(jsonStr)) // 预分配容量
-	inString := false
-	escapeNext := false
-
-	for _, char := range jsonStr {
-		// 处理转义字符
-		if escapeNext {
-			buf.WriteRune(char)
-			escapeNext = false
-			continue
-		}
-
-		// 处理双引号
-		if char == '"' {
-			buf.WriteRune(char)
-			inString = !inString
-			continue
-		}
-
-		// 处理转义字符
-		if char == '\\' {
-			buf.WriteRune(char)
-			escapeNext = true
-			continue
-		}
-
-		// 如果不在字符串中，跳过空白字符
-		if !inString && (char == ' ' || char == '\t' || char == '\n' || char == '\r') {
-			continue
-		}
-
-		// 其他字符正常写入
-		buf.WriteRune(char)
+	firstChar := trimmed[0]
+	switch firstChar {
+	case '{':
+		return "object"
+	case '[':
+		return "array"
+	case '"':
+		return "string"
+	case 't', 'f':
+		return "boolean"
+	case 'n':
+		return "null"
+	default:
+		return "number"
 	}
-
-	return buf.String(), nil
 }

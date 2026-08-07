@@ -43,7 +43,7 @@ func NewFastestSonic() *Sonic {
 }
 
 // Marshal 将Go对象转换为JSON字节数组
-// 这是对jsoniter.Marshal的封装，提供更好的性能
+// 这是对sonic.Marshal的封装，提供更好的性能
 func (s *Sonic) Marshal(v interface{}) ([]byte, error) {
 	return s.defaultSonic.Marshal(v)
 }
@@ -184,7 +184,7 @@ func (s *Sonic) Compact(jsonStr string) (string, error) {
 var defaultSonic = NewStandardSonic()
 
 // Marshal 将Go对象转换为JSON字节数组
-// 这是对jsoniter.Marshal的封装，提供更好的性能
+// 这是对sonic.Marshal的封装，提供更好的性能
 func Marshal(v interface{}) ([]byte, error) {
 	return defaultSonic.Marshal(v)
 }
